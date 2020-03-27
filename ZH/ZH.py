@@ -31,7 +31,7 @@ def getArgs() :
     parser.add_argument("-m","--maxPrint",default=0,type=int,help="Maximum number of events to print.")
     parser.add_argument("-t","--testMode",default='',help="tau MVA selection")
     parser.add_argument("-y","--year",default=2017,type=int,help="Data taking period, 2016, 2017 or 2018")
-    parser.add_argument("-s","--selection",default='ZH',help="is this for the ZH or the AZH analysis?")
+    parser.add_argument("-s","--selection",default='HAA',help="is this for the ZH,AZH, or HAA analysis?")
     parser.add_argument("-u","--unique",default='none',help="CSV file containing list of unique events for sync studies.") 
     parser.add_argument("-w","--weights",default=False,type=int,help="to re-estimate Sum of Weights")
     
@@ -44,7 +44,11 @@ maxPrint = args.maxPrint
 cutCounter = {}
 cutCounterGenWeight = {}
 
-cats = ['eeet','eemt','eett','eeem','mmet','mmmt','mmtt','mmem']
+#cats = ['eeet','eemt','eett','eeem','mmet','mmmt','mmtt','mmem']
+#definitely 2 muons for HAA
+cats = ['mmet','mmmt','mmtt','mmem']
+#cats = ['mmmt']
+#cats = ['mmtt']
 
 for cat in cats : 
     cutCounter[cat] = GF.cutCounter()
@@ -190,7 +194,8 @@ for count, e in enumerate(inTree) :
 	cutCounter[cat].count('Trigger')
 	if  MC :   cutCounterGenWeight[cat].countGenWeight('Trigger', e.genWeight)
             
-    for lepMode in ['ee','mm'] :
+    #for lepMode in ['ee','mm'] :
+    for lepMode in ['mm'] :
         if args.category != 'none' and not lepMode in args.category : continue
 
         if lepMode == 'ee' :
@@ -371,10 +376,11 @@ for count, e in enumerate(inTree) :
             cutCounter[cat].count("VVtightTauPair")
 	    if  MC :   cutCounterGenWeight[cat].countGenWeight('VVtightTauPair', e.genWeight)
                         
-            SVFit = True
+            #SVFit = True
+            SVFit = False
 	    
             if not MC : isMC = False
-            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era) 
+            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era,goodMuonList) 
 
             if maxPrint > 0 :
                 maxPrint -= 1

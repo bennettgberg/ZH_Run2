@@ -14,7 +14,7 @@ def getArgs() :
     parser.add_argument("-s","--selection",default='ZH',type=str,help="Select ZH or AZH")
     return parser.parse_args()
 
-def beginBatchScript(baseFileName) :
+def beginBatchScriptTcsh(baseFileName) :
     outLines = ['#!/bin/tcsh\n']
     outLines.append("source /cvmfs/cms.cern.ch/cmsset_default.csh\n")
     outLines.append("setenv SCRAM_ARCH slc6_amd64_gcc700\n")
@@ -25,6 +25,16 @@ def beginBatchScript(baseFileName) :
     outLines.append("cd ${_CONDOR_SCRATCH_DIR}\n")
     return outLines
 
+def beginBatchScript(baseFileName) :
+    outLines = ['#!/bin/bash\n']
+    outLines.append("source /cvmfs/cms.cern.ch/cmsset_default.sh\n")
+    outLines.append("export SCRAM_ARCH=slc6_amd64_gcc700\n")
+    outLines.append("eval scramv1 project CMSSW CMSSW_10_2_16_patch1\n")
+    outLines.append("cd CMSSW_10_2_16_patch1/src\n")
+    outLines.append("eval scramv1 runtime -sh\n")
+    outLines.append("echo ${_CONDOR_SCRATCH_DIR}\n")
+    outLines.append("cd ${_CONDOR_SCRATCH_DIR}\n")
+    return outLines
 def getFileName(line) :
     tmp = line.split()[0].strip(',')
     fileName = tmp.strip()
@@ -100,17 +110,17 @@ for nFile in range(0, len(dataset),mjobs) :
 # now that .csh files have been generated make a list of corresponding .jdl files
 
 #dir = '/uscms_data/d3/alkaloge/ZH/CMSSW_10_2_9/src/MC/'
-'''
+
 dir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/MC/"
 dirData = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/data/"
 funcsDir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/funcs/"
 SVFitDir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/SVFit/"
-'''
 
-dir = os.getcwd()+"/../../../../MC/"
-dirData = os.getcwd()+"/../../../../data/"
-funcsDir = os.getcwd()+"/../../../../funcs/"
-SVFitDir = os.getcwd()+"/../../../../SVFit/"
+
+#dir = os.getcwd()+"/../../../../MC/"
+#dirData = os.getcwd()+"/../../../../data/"
+#funcsDir = os.getcwd()+"/../../../../funcs/"
+#SVFitDir = os.getcwd()+"/../../../../SVFit/"
 
 jsons={'Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt', 'Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt','Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt'}
 
@@ -128,6 +138,8 @@ for file in scriptList :
     outLines.append('Output = {0:s}.out\n'.format(base))
     outLines.append('Error = {0:s}.err\n'.format(base))
     outLines.append('Log = {0:s}.log\n'.format(base))
+    outLines.append('Proxy_filename = x509up')
+    outLines.append('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)')
     #print("dir={0:s}".format(dir))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root,  {0:s}MCsamples_{1:s}.csv, {0:s}ScaleFactor.py, {0:s}SFs.tar.gz, {0:s}cuts_{2:s}.yaml,'.format(dir,args.year, args.selection))
     outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root,  {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml,'.format(dir,args.year, args.selection))
@@ -138,7 +150,10 @@ for file in scriptList :
     outLines.append('{0:s}{1:s} \n'.format(dirData,fjson))
     outLines.append('should_transfer_files = YES\n')
     outLines.append('when_to_transfer_output = ON_EXIT\n')
-    outLines.append('x509userproxy = $ENV(X509_USER_PROXY)\n')
+    outLines.append('arguments = $(Proxy_filename)')
+    #outLines.append('x509userproxy = $ENV(X509_USER_PROXY)\n')
+    outLines.append('request_cpus = 2\n')
+    outLines.append('+JobFlavour  = "tomorrow"\n')
     outLines.append('Queue 1\n')
     open('{0:s}.jdl'.format(base),'w').writelines(outLines)
 

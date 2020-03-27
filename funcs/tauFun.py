@@ -752,6 +752,7 @@ def findMuTrigger(goodMuonList,entry,era):
 
     return MutrigList
 
+#edit this function for HAA
 def findZ(goodElectronList, goodMuonList, entry) :
     mm = selections['mm'] # H->tau(mu)+tau(h) selections
     selpair,pairList, mZ, bestDiff = [],[], 91.19, 99999. 
@@ -769,8 +770,9 @@ def findZ(goodElectronList, goodMuonList, entry) :
                     cand = e1 + e2
                     mass = cand.M()
 		    #if mass < 60 or mass > 120 : continue
-                    if abs(mass-mZ) < bestDiff :
-                        bestDiff = abs(mass-mZ)
+                    #if abs(mass-mZ) < bestDiff :
+                    if (abs(mass) < 60.) and (abs(mass) > 15.):
+                        #bestDiff = abs(mass-mZ)
                         if entry.Electron_charge[ii] > 0. :
                             pairList = [e1,e2]
                             selpair = [ii,jj]
@@ -794,8 +796,9 @@ def findZ(goodElectronList, goodMuonList, entry) :
                     cand = mu1 + mu2
                     mass = cand.M()
 		    #if mass < 60 or mass > 120 : continue
-                    if abs(mass-mZ) < bestDiff :
-                        bestDiff = abs(mass-mZ)
+                    #if abs(mass-mZ) < bestDiff :
+                    if (abs(mass) < 60.) and (abs(mass) > 15.):
+                        #bestDiff = abs(mass-mZ)
                         if entry.Muon_charge[ii] > 0. :
                             pairList = [mu1,mu2]
                             selpair = [ii,jj]
@@ -823,8 +826,9 @@ def findZmumu(goodMuonList, entry) :
                 cand = mu1 + mu2
                 mass = cand.M()
 		#if mass < 60 or mass > 120 : continue
-                if abs(mass-mZ) < bestDiff :
-                    bestDiff = abs(mass-mZ)
+                #if abs(mass-mZ) < bestDiff :
+                if (abs(mass) < 60.) and (abs(mass) > 15.):
+                    #bestDiff = abs(mass-mZ)
                     pairList.append([mu1,mu2]) 
 
     return pairList
@@ -844,7 +848,8 @@ def findZee(goodElectronList, entry) :
                 cand = e1 + e2
                 mass = cand.M()
 		#if mass < 60 or mass > 120 : continue
-                if abs(mass-mZ) < bestDiff :
+                #if abs(mass-mZ) < bestDiff :
+                if (abs(mass) < 60.) and (abs(mass) > 15.):
                     bestDiff = abs(mass-mZ)
                     pairList.append([e1,e2]) 
 

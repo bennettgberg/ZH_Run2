@@ -11,16 +11,30 @@ def getArgs() :
     parser.add_argument("-m","--mode",default='anaXRD',help="Mode (script to run).")
     parser.add_argument("-y","--year",default=2017,type=str,help="Data taking period, 2016, 2017 or 2018")
     parser.add_argument("-c","--concatenate",default=5,type=int,help="On how many files to run on each job")
-    parser.add_argument("-s","--selection",default='ZH',type=str,help="select ZH or AZH")
+    parser.add_argument("-s","--selection",default='HAA',type=str,help="select ZH,AZH,HAA")
     return parser.parse_args()
 
-def beginBatchScript(baseFileName) :
+def beginBatchScriptTcsh(baseFileName) :
     outLines = ['#!/bin/tcsh\n']
     outLines.append("source /cvmfs/cms.cern.ch/cmsset_default.csh\n")
     outLines.append("setenv SCRAM_ARCH slc6_amd64_gcc700\n")
     outLines.append("eval `scramv1 project CMSSW CMSSW_10_2_16_patch1`\n")
     outLines.append("cd CMSSW_10_2_16_patch1/src\n")
     outLines.append("eval `scramv1 runtime -csh`\n")
+    outLines.append("echo ${_CONDOR_SCRATCH_DIR}\n")
+    outLines.append("cd ${_CONDOR_SCRATCH_DIR}\n")
+    return outLines
+
+def beginBatchScript(baseFileName) :
+    outLines = ['#!/bin/bash\n']
+    outLines.append("source /cvmfs/cms.cern.ch/cmsset_default.sh\n")
+    outLines.append("export SCRAM_ARCH=slc6_amd64_gcc700\n")
+    outLines.append("eval scramv1 project CMSSW CMSSW_10_2_16_patch1\n")
+    outLines.append("cd CMSSW_10_2_16_patch1/src\n")
+    outLines.append("eval scramv1 runtime -sh\n")
+    outLines.append("export X509_USER_PROXY=$1\n")
+    outLines.append("voms-proxy-info -all\n")
+    outLines.append("voms-proxy-info -all -file $1\n")
     outLines.append("echo ${_CONDOR_SCRATCH_DIR}\n")
     outLines.append("cd ${_CONDOR_SCRATCH_DIR}\n")
     return outLines
@@ -67,7 +81,8 @@ counter=0
 for nFile in range(0, len(dataset),mjobs) :
     #print("nFile={0:d} file[:80]={1:s}".format(nFile,file[:80]))
 
-    scriptName = "{0:s}_{1:03d}.csh".format(args.nickName,nFile+1)
+    #scriptName = "{0:s}_{1:03d}.csh".format(args.nickName,nFile+1)
+    scriptName = "{0:s}_{1:03d}.sh".format(args.nickName,nFile+1)
     print("scriptName={0:s}".format(scriptName))
     outLines = beginBatchScript(scriptName)
 
@@ -102,30 +117,35 @@ for nFile in range(0, len(dataset),mjobs) :
 # now that .csh files have been generated make a list of corresponding .jdl files
 
 #dir = '/uscms_data/d3/alkaloge/ZH/CMSSW_10_2_9/src/MC/'
-'''
+
 dir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/MC/"
 dirData = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/data/"
 funcsDir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/funcs/"
 SVFitDir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/SVFit/"
-'''
 
-dir = os.getcwd()+"/../../../../MC/"
-dirData = os.getcwd()+"/../../../../data/"
-funcsDir = os.getcwd()+"/../../../../funcs/"
-SVFitDir = os.getcwd()+"/../../../../SVFit/"
+
+#dir = os.getcwd()+"/../../../../MC/"
+#dirData = os.getcwd()+"/../../../../data/"
+#funcsDir = os.getcwd()+"/../../../../funcs/"
+#SVFitDir = os.getcwd()+"/../../../../SVFit/"
 
 
 print("dir={0:s}".format(dir))
 
 for file in scriptList :
-    base = file[:-4] 
+    #base = file[:-4] 
+    base = file[:-3] 
+    #print base,"     OR     ",file[:-3]
     outLines = ['universe = vanilla\n']
     outLines.append('Executable = {0:s}\n'.format(file))
     outLines.append('Output = {0:s}.out\n'.format(base))
     outLines.append('Error = {0:s}.err\n'.format(base))
     outLines.append('Log = {0:s}.log\n'.format(base))
+    outLines.append('Proxy_filename = x509up\n')
+    outLines.append('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)\n')
     print("dir={0:s}".format(dir))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}ScaleFactor.py, {0:s}SFs.tar.gz, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
+    #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
     outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
     #outLines.append('{0:s}*txt, '.format(dirData))
     outLines.append('{0:s}tauFun.py, {0:s}generalFunctions.py, {0:s}outTuple.py,'.format(funcsDir))
@@ -133,7 +153,10 @@ for file in scriptList :
     outLines.append('{0:s}FastMTT.cc, {0:s}MeasuredTauLepton.cc, {0:s}svFitAuxFunctions.cc\n'.format(SVFitDir))
     outLines.append('should_transfer_files = YES\n')
     outLines.append('when_to_transfer_output = ON_EXIT\n')
-    outLines.append('x509userproxy = $ENV(X509_USER_PROXY)\n')
+    outLines.append('arguments = $(Proxy_path)\n')
+    #outLines.append('x509userproxy = $ENV(X509_USER_PROXY)\n')
+    outLines.append('request_cpus = 2\n')
+    outLines.append('+JobFlavour  = "tomorrow"\n')
     outLines.append('Queue 1\n')
     open('{0:s}.jdl'.format(base),'w').writelines(outLines)
 

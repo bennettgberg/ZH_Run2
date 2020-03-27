@@ -186,6 +186,7 @@ class outTuple() :
         self.isTrig_2   = array('f',[0])
         self.isTrig_1   = array('f',[0])
         self.isDoubleTrig   = array('f',[0])
+        self.isTripleTrig   = array('f',[0])
 
 
         # jet variables
@@ -386,6 +387,7 @@ class outTuple() :
         self.t.Branch('isTrig_2',  self.isTrig_2, 'isTrig_2/F' )
         self.t.Branch('isTrig_1',  self.isTrig_1, 'isTrig_1/F' )
         self.t.Branch('isDoubleTrig',  self.isDoubleTrig, 'isDoubleTrig/F' )
+        self.t.Branch('isTripleTrig',  self.isTripleTrig, 'isTripleTrig/F' )
 
 
         # jet variables
@@ -532,13 +534,13 @@ class outTuple() :
         ttP4 = FMTT.getBestP4()
         return ttP4.M(), ttP4.Mt() 
     
-    def Fill(self, entry, SVFit, cat, jt1, jt2, LepP, LepM, lepList, isMC, era ) :
+    def Fill(self, entry, SVFit, cat, jt1, jt2, LepP, LepM, lepList, isMC, era, goodMuonList ) :
         ''' - jt1 and jt2 point to the selected tau candidates according to the table below.
             - if e.g., channel = 'et', the jt1 points to the electron list and jt2 points to the tau list.
             - LepP and LepM are TLorentz vectors for the positive and negative members of the dilepton pair
         '''
 
-        is_trig_1, is_trig_2, is_Dtrig_1 = 0., 0., 0.
+        is_trig_1, is_trig_2, is_trig_3, is_Dtrig_1 , is_Ttrig_1 = 0., 0., 0., 0., 0.
         TrigListLep = []
         TrigListTau = []
         hltListLep  = []
@@ -553,6 +555,12 @@ class outTuple() :
 	TrigListLepD, hltListLepD  = GF.findDoubleLeptTrigger(lepList, entry, channel_ll, era)
 
 	TrigListLepD = list(dict.fromkeys(TrigListLepD))
+
+    #triple lepton trigger for haa mmmt mmme
+	TrigListLepT, hltListLepT  = GF.findTripleLeptTrigger(goodMuonList, entry, channel_ll, era)
+
+	TrigListLepT = list(dict.fromkeys(TrigListLepT))
+	print TrigListLepT, hltListLepT
 
 	#print TrigListLepD, hltListLepD, TrigListLep, hltListLep,
 	if len(TrigListLepD) == 2 : 
@@ -575,6 +583,37 @@ class outTuple() :
 	        is_trig_1 = 1.
 	        is_trig_2 = 1.
 
+	if len(TrigListLepT) == 3 : 
+	    if lepList[0] == TrigListLepT[0] :
+	        is_Ttrig_1 = 1
+	    else : 
+	        is_Ttrig_1 = -1
+
+
+        if len(TrigListLep) == 1 :
+
+            if lepList[0] == TrigListLep[0] :
+                is_trig_1 = 1.
+            else:
+                is_trig_1 = -1. #that means that the subleading fired the trigger
+                is_trig_2 = -1. #that means that the subsubleading fired the trigger
+                is_trig_3 = -1. #that means that the subsubleading fired the trigger
+
+        if len(TrigListLep) == 2 :
+
+            if lepList[0] == TrigListLep[0] :
+                is_trig_1 = 1.
+            elif lepList[1] == TrigListLep[1] :
+                is_trig_2 = 1.
+            else:
+                is_trig_1 = -1
+                is_trig_2 = -1. #that means that the subsubleading fired the trigger
+
+        if len(TrigListLep) == 3 :
+            if 'TriLept' in hltListLep :
+                is_trig_1 = 1.
+                is_trig_2 = 1.
+                is_trig_3 = 1.
 
         #if len(TrigListLep) ==1 : print 'TrigerList ===========>', TrigListLep, lepList, hltListLep, channel_ll, 'istrig_1', is_trig_1, 'istrig_2', is_trig_2, 'lenTrigList', len(TrigListLep),  'lenLept', len(lepList), 'lepList_0', lepList[0], 'TrigList_0', TrigListLep[0], hltListLep
         
@@ -785,7 +824,8 @@ class outTuple() :
 		    sf_T2_MC = self.sf_MuonTrigIso27.get_EfficiencyMC(entry.Muon_pt[jt2],entry.Muon_eta[jt2])
 		    sf_T2_Data = self.sf_MuonTrigIso27.get_EfficiencyData(entry.Muon_pt[jt2],entry.Muon_eta[jt2])
             '''
-
+        #Check to make sure these variables are the right muons and taus!!
+        #Why is M-Vis off?? 
         # Fill variables for Leg3, where 3->tau(mu) and 4->tau(had)
         elif channel == 'mt' :
             self.pt_3[0]     = entry.Muon_pt[jt1]
@@ -807,9 +847,12 @@ class outTuple() :
             if isMC:
                 try : self.gen_match_3[0] = ord(entry.Muon_genPartFlav[jt1])
                 except AttributeError : self.gen_match_1[0] = -1
-            
-            tau1.SetPtEtaPhiM(entry.Muon_pt[jt1], entry.Muon_eta[jt1], entry.Muon_phi[jt1], tauMass)
-            tau2.SetPtEtaPhiM(entry.Tau_pt[jt2],  entry.Tau_eta[jt2],  entry.Tau_phi[jt2],  tauMass) 
+
+           ##Why is this tau Mass explicitly?! 
+            #tau1.SetPtEtaPhiM(entry.Muon_pt[jt1], entry.Muon_eta[jt1], entry.Muon_phi[jt1], tauMass)
+            #tau2.SetPtEtaPhiM(entry.Tau_pt[jt2],  entry.Tau_eta[jt2],  entry.Tau_phi[jt2],  tauMass) 
+            tau1.SetPtEtaPhiM(entry.Muon_pt[jt1], entry.Muon_eta[jt1], entry.Muon_phi[jt1], entry.Muon_mass[jt1])
+            tau2.SetPtEtaPhiM(entry.Tau_pt[jt2],  entry.Tau_eta[jt2],  entry.Tau_phi[jt2],entry.Tau_mass[jt2] ) 
             
             # fill genMatch for tau(mu)
             if isMC:
@@ -1050,9 +1093,10 @@ class outTuple() :
 
 
         # trig
-	self.isTrig_1[0]   = is_trig_1
+        self.isTrig_1[0]   = is_trig_1
         self.isTrig_2[0]   = is_trig_2
-	self.isDoubleTrig[0]   = is_Dtrig_1
+        self.isDoubleTrig[0]   = is_Dtrig_1
+        self.isTripleTrig[0]   = is_Ttrig_1
 
         # jet variables
         nJet30, jetList, bJetList, bJetListFlav = self.getJets(entry,tau1,tau2,era) 
