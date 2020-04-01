@@ -22,7 +22,7 @@ for line in open(args.inFile,'r').readlines() :
     dataset = line.strip() 
     if len(dataset) < 2 : continue
     nickname = dataset.split('/')[1] + '_' + dataset.split('/')[2].split('-')[0] 
-    if args.year not in nickname : continue
+    #if args.year not in nickname : continue
     print("dataset={0:s} nickname={1:s}".format(dataset,nickname))
 
     mode = 'anaXRD'

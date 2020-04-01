@@ -32,6 +32,9 @@ def beginBatchScript(baseFileName) :
     outLines.append("eval scramv1 project CMSSW CMSSW_10_2_16_patch1\n")
     outLines.append("cd CMSSW_10_2_16_patch1/src\n")
     outLines.append("eval scramv1 runtime -sh\n")
+    outLines.append("export X509_USER_PROXY=$1\n")
+    outLines.append("voms-proxy-info -all\n")
+    outLines.append("voms-proxy-info -all -file $1\n")
     outLines.append("echo ${_CONDOR_SCRATCH_DIR}\n")
     outLines.append("cd ${_CONDOR_SCRATCH_DIR}\n")
     return outLines
@@ -77,7 +80,8 @@ counter=0
 for nFile in range(0, len(dataset),mjobs) :
     #print("nFile={0:d} file[:80]={1:s}".format(nFile,file[:80]))
 
-    scriptName = "{0:s}_{1:03d}.csh".format(args.nickName,nFile+1)
+    #scriptName = "{0:s}_{1:03d}.csh".format(args.nickName,nFile+1)
+    scriptName = "{0:s}_{1:03d}.sh".format(args.nickName,nFile+1)
     print("scriptName={0:s}".format(scriptName))
     outLines = beginBatchScript(scriptName)
 
@@ -138,8 +142,8 @@ for file in scriptList :
     outLines.append('Output = {0:s}.out\n'.format(base))
     outLines.append('Error = {0:s}.err\n'.format(base))
     outLines.append('Log = {0:s}.log\n'.format(base))
-    outLines.append('Proxy_filename = x509up')
-    outLines.append('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)')
+    outLines.append('Proxy_filename = x509up\n')
+    outLines.append('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)\n')
     #print("dir={0:s}".format(dir))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root,  {0:s}MCsamples_{1:s}.csv, {0:s}ScaleFactor.py, {0:s}SFs.tar.gz, {0:s}cuts_{2:s}.yaml,'.format(dir,args.year, args.selection))
     outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root,  {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml,'.format(dir,args.year, args.selection))
@@ -150,7 +154,7 @@ for file in scriptList :
     outLines.append('{0:s}{1:s} \n'.format(dirData,fjson))
     outLines.append('should_transfer_files = YES\n')
     outLines.append('when_to_transfer_output = ON_EXIT\n')
-    outLines.append('arguments = $(Proxy_filename)')
+    outLines.append('arguments = $(Proxy_path)\n')
     #outLines.append('x509userproxy = $ENV(X509_USER_PROXY)\n')
     outLines.append('request_cpus = 2\n')
     outLines.append('+JobFlavour  = "tomorrow"\n')
