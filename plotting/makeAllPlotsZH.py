@@ -225,6 +225,8 @@ args = getArgs()
 era=str(args.year)
 #cats = { 1:'eeet', 2:'eemt', 3:'eett', 4:'mmet', 5:'mmmt', 6:'mmtt', 7:'et', 8:'mt', 9:'tt' }
 cats = { 1:'eeet', 2:'eemt', 3:'eett', 4:'eeem', 5:'mmet', 6:'mmmt', 7:'mmtt', 8:'mmem'}
+#cats = { 5:'mmet', 6:'mmmt', 7:'mmtt', 8:'mmem'}
+#cats = { 6:'mmmt'}
 tightCuts = not args.looseCuts 
 dataDriven = not args.MConly
 
@@ -232,7 +234,8 @@ unblind=False
 if args.unBlind.lower() == 'true' or args.unBlind.lower == 'yes' : unblind = True
 
 #groups = ['Signal','WJets','Rare','ZZ','data']
-groups = ['Signal','ZZ','WJets','Rare','Top','DY','data']
+#groups = ['Signal','ZZ','WJets','Rare','Top','DY','data']
+groups = ['Signal','Signal1','Signal2','Signal3','Signal4','Signal5','Signal6','Signal7','Signal8','Signal9','ZZ4L','Reducible','Rare','data']
 
 Pblumi = 1000.
 tauID_w = 1.
@@ -242,7 +245,8 @@ tauID_w = 1.
 kUndefinedDecayType, kTauToHadDecay,  kTauToElecDecay, kTauToMuDecay = 0, 1, 2, 3   
 
 gInterpreter.ProcessLine(".include .")
-for baseName in ['../SVFit/MeasuredTauLepton','../SVFit/svFitAuxFunctions','../SVFit/FastMTT', '../HTT-utilities/RecoilCorrections/src/MEtSys', '../HTT-utilities/RecoilCorrections/src/RecoilCorrector'] : 
+cmsswbase = "$CMSSW_BASE/src"
+for baseName in ['../SVFit/MeasuredTauLepton','../SVFit/svFitAuxFunctions','../SVFit/FastMTT', cmsswbase+'/HTT-utilities/RecoilCorrections/src/MEtSys', cmsswbase+'/HTT-utilities/RecoilCorrections/src/RecoilCorrector'] : 
     if os.path.isfile("{0:s}_cc.so".format(baseName)) :
 	gInterpreter.ProcessLine(".L {0:s}_cc.so".format(baseName))
     else :
@@ -316,7 +320,8 @@ if era == '2018' :
 
 
 
-if era == '2016' : recoilCorrector  = ROOT.RecoilCorrector("HTT-utilities/RecoilCorrections/data/Type1_PFMET_Run2016BtoH.root");
+#if era == '2016' : recoilCorrector  = ROOT.RecoilCorrector("HTT-utilities/RecoilCorrections/data/Type1_PFMET_Run2016BtoH.root");
+if era == '2016' : recoilCorrector  = ROOT.RecoilCorrector("HTT-utilities/RecoilCorrections/data/TypeI-PFMet_Run2016BtoH.root");
 if era == '2017' : recoilCorrector  = ROOT.RecoilCorrector("HTT-utilities/RecoilCorrections/data/Type1_PFMET_2017.root");
 if era == '2018' : recoilCorrector  = ROOT.RecoilCorrector("HTT-utilities/RecoilCorrections/data/TypeI-PFMet_Run2018.root");
 
@@ -393,14 +398,16 @@ for line in open(args.inFileName,'r').readlines() :
     if '#' in vals[0] : continue
     if vals[0][0] == "W" and  "JetsToLNu" in vals[0][2:] :
         WNJetsXsecs.append(float(vals[2]))
-        filein = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
+        #filein = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
+        filein = '/eos/home-s/shigginb/HAA_ntuples/March_2020/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
         fIn = TFile.Open(filein,"READ")
         WxGenweightsArr.append(fIn.Get("hWeights").GetSumOfWeights())
 
 
     if vals[0][:2] == "DY" and "JetsToLL" in vals[0][3:] and 'M10to50' not in vals[0]:
         DYNJetsXsecs.append(float(vals[2]))
-        filein = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
+        #filein = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
+        filein = '/eos/home-s/shigginb/HAA_ntuples/March_2020/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
         fIn = TFile.Open(filein,"READ")
         DYxGenweightsArr.append(fIn.Get("hWeights").GetSumOfWeights())
         #DYxGenweightsArr.append(fIn.Get("DY"+str(i)+"genWeights").GetSumOfWeights())
@@ -415,9 +422,11 @@ for line in open(args.inFileName,'r').readlines() :
     nickName = vals[0]
     group = vals[1]
     nickNames[group].append(nickName)
+    print "cross section ",vals[2]
     xsec[nickName] = float(vals[2])
     #totalWeight[nickName] = float(vals[4])
-    filein = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
+    #filein = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
+    filein = '/eos/home-s/shigginb/HAA_ntuples/March_2020/{1:s}_{2:s}.root'.format(args.analysis,vals[0],era)
     fIn = TFile.Open(filein,"READ")
     totalWeight[nickName] = float(fIn.Get("hWeights").GetSumOfWeights())
     sampleWeight[nickName]= Pblumi*weights['lumi']*xsec[nickName]/totalWeight[nickName]
@@ -507,7 +516,7 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "d0_2":[20,-0.2,0.2,"[cm]","d_{xy}(l_{2})"],
         "q_2":[3,-1.5,1.5,"","charge(l_{2})"],
 
-	"iso_3":[20,0,1,"","relIso(l_{3})"],
+	    "iso_3":[20,0,1,"","relIso(l_{3})"],
         "pt_3":[40,0,200,"[Gev]","P_{T}(l_{3})"],
         "eta_3":[60,-3,3,"","#eta(l_{3})"],
         "phi_3":[60,-3,3,"","#phi(l_{3})"],
@@ -555,8 +564,8 @@ plotSettings = { # [nBins,xMin,xMax,units]
         "H_DR":[60,0,6,"","#Delta R(#tau#tau)"],
         "H_tot":[30,0,200,"[GeV]","m_{T}tot(#tau#tau)"],
 
-        "mt_sv":[30,0,300,"[Gev]","m_{T}(#tau#tau)"],
-        "m_sv":[30,0,300,"[Gev]","m(#tau#tau)(SV)"],
+        #"mt_sv":[30,0,300,"[Gev]","m_{T}(#tau#tau)"],
+        #"m_sv":[30,0,300,"[Gev]","m(#tau#tau)(SV)"],
         "AMass":[50,50,550,"[Gev]","m_{Z+H}(SV)"],
         #"CutFlowWeighted":[15,0.5,15.5,"","cutflow"],
         #"CutFlow":[15,0.5,15.5,"","cutflow"]
@@ -727,6 +736,7 @@ for group in groups :
             if 'GeV' not in units : hMC[group][cat][plotVar].GetYaxis().SetTitle("Events / "+str(binwidth))
 
             hName = 'h{0:s}_{1:s}_{2:s}_FM'.format(group,cat,plotVar)
+            print hName
             hMCFM[group][cat][plotVar] = TH1D(hName,hName,nBins,xMin,xMax)
             hMCFM[group][cat][plotVar].SetDefaultSumw2()
             hMCFM[group][cat][plotVar].GetXaxis().SetTitle(lTitle + ' ' + units)
@@ -735,13 +745,13 @@ for group in groups :
 
             #print '=======', nBins, xMin, xMax, hMC[group][cat][plotVar].GetName(), hMC[group][cat][plotVar].GetTitle()
 
-    print("\nInstantiating TH1D {0:s}".format(hName))
-    print("      Nickname                 Entries    Wt/Evt  Ngood   Tot Wt")
 
+    #print("\nInstantiating TH1D {0:s}".format(hName))
+    #print("      Nickname                 Entries    Wt/Evt  Ngood   Tot Wt")
 
     for nickName in nickNames[group] :
 
-
+        print "Working on cat",cat,"  and  process   ",nickName
         hCutFlow[cat][nickName] = {}
         hW[cat][nickName] = {}
 	hW[cat][nickName] = TH1D("hW_"+nickName,"weights",3,-0.5,2.5)
@@ -749,12 +759,14 @@ for group in groups :
 	if 'JetsToLNu' in nickName : isW = True
 
         isData = False 
-        inFileName = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,nickName,era)
+        #inFileName = '../MC/condor/{0:s}/{1:s}_{2:s}/{1:s}_{2:s}.root'.format(args.analysis,nickName,era)
+        inFileName = '/eos/home-s/shigginb/HAA_ntuples/March_2020/{1:s}_{2:s}.root'.format(args.analysis,nickName,era)
 	#cf = os.path.isfile('{0:s}'.format(inFileName))
 	#if not cf : continue
         if group == 'data' :
             isData = True
-            inFileName = './data/{0:s}/{1:s}/{1:s}.root'.format(args.analysis,nickName)
+            #inFileName = './data/{0:s}/{1:s}/{1:s}.root'.format(args.analysis,nickName)
+            inFileName = '/eos/home-s/shigginb/HAA_ntuples/March_2020_data/{1:s}.root'.format(args.analysis,nickName)
 	    print 'for data will use ',inFileName
         try :
 
@@ -767,12 +779,13 @@ for group in groups :
 	    #continue
             exit()
 
-        for icat, cat in cats.items()[0:8] :
-	    if group != 'data' : hCutFlow[cat][nickName] = inFile.Get("hCutFlowWeighted_{0:s}".format(cat))
-	    else : hCutFlow[cat][nickName] = inFile.Get("hCutFlow_{0:s}".format(cat))  #temp
-
+        for icat, cat in cats.items()[0:8]:
+	    if (group != 'data' and inFile.GetListOfKeys().Contains("hCutFlow_{0:s}".format(cat))): hCutFlow[cat][nickName] = inFile.Get("hCutFlowWeighted_{0:s}".format(cat))
+	    #else : hCutFlow[cat][nickName] = inFile.Get("hCutFlow_{0:s}".format(cat))  #temp
+	    elif inFile.GetListOfKeys().Contains("hCutFlow_{0:s}".format(cat)): hCutFlow[cat][nickName] = inFile.Get("hCutFlow_{0:s}".format(cat))  #temp
+	    else : continue  #temp # if the histo doesn't exist because we don't use that channel...move on 
 	    #if group =='data'  : print 'for ========================',hCutFlow[cat][nickName].GetSumOfWeights(), group, cat
-	
+            #print hCutFlow	
             for i in range(1,hCutFlow[cat][nickName].GetNbinsX()+1) : 
 	        #print i, hCutFlow[cat][nickName].GetBinContent(i), hCutFlow[cat][nickName].GetXaxis().GetBinLabel(i), cat
 	        WCounter[i-1][icat-1] = float(hCutFlow[cat][nickName].GetBinContent(i))
@@ -1075,7 +1088,8 @@ for group in groups :
 		if cat[2:] == 'tt' and e.gen_match_3 == 5 : 
 			weight *= tauSFTool.getSFvsPT(e.pt_3,e.gen_match_3)
 			weightFM *= tauSFTool.getSFvsPT(e.pt_3,e.gen_match_3)
-			tauV3cor *= testool.getTES(e.decayMode_3)
+			#tauV3cor *= testool.getTES(e.decayMode_3)
+			tauV3cor *= testool.getTES(e.pt_3, e.decayMode_3, e.gen_match_3)
 			if e.decayMode_3 == 1 : 
 			    e.m_3 =  0.1396  
 			    tauV3cor.SetE(0.1396)
@@ -1085,7 +1099,8 @@ for group in groups :
 		    if e.gen_match_4 == 5 : 
 			weight *= tauSFTool.getSFvsPT(e.pt_4,e.gen_match_4)
 			weightFM *= tauSFTool.getSFvsPT(e.pt_4,e.gen_match_4)
-			tauV4cor *= testool.getTES(e.decayMode_4)
+			#tauV4cor *= testool.getTES(e.decayMode_4)
+			tauV4cor *= testool.getTES(e.pt_4, e.decayMode_4, e.gen_match_4)
 			if e.decayMode_4 == 1 : 
 			    e.m_4 =  0.1396  
 			    tauV4cor.SetE(0.1396)
@@ -1229,6 +1244,10 @@ for group in groups :
         for icat, cat in cats.items()[0:8] : 
 	    nn = nickName
 	    if 'data' in nickName : nn = 'data'
+	    if (group != 'data' and inFile.GetListOfKeys().Contains("hCutFlow_{0:s}".format(cat))): hCutFlow[cat][nickName] = inFile.Get("hCutFlowWeighted_{0:s}".format(cat))
+	    #else : hCutFlow[cat][nickName] = inFile.Get("hCutFlow_{0:s}".format(cat))  #temp
+	    elif inFile.GetListOfKeys().Contains("hCutFlow_{0:s}".format(cat)): hCutFlow[cat][nickName] = inFile.Get("hCutFlow_{0:s}".format(cat))  #temp
+	    else : continue  #temp # if the histo doesn't exist because we don't use that channel...move on 
             hCutFlow[cat][nickName].SetName( 'hCutFlow_'+cat+'_'+nn)
             #print icat, cat, nickName, hCutFlow[cat][nickName].GetName(), group
 
