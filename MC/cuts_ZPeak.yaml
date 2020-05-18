@@ -3,8 +3,8 @@ trig:
   singleLepton: false
   doubleLepton: false 
 mll:
-  mll_low: 0.0
-  mll_high: 200.0 
+  mll_low: 60.
+  mll_high: 120. 
 tt:
   tau_pt: 20
   tau_eta: 2.3
@@ -91,6 +91,15 @@ mm:
   mu_dxy: 0.045
   mu_dz: 0.2
   mu_type: true
+mextra:
+  mu_pt: 10
+  mu_eta: 2.4
+  mu_ID: false
+  mu_iso_f: false
+  mu_iso: 0.25
+  mu_dxy: 0.045
+  mu_dz: 0.2
+  mu_type: true
 ee: 
   ele_pt: 10.
   ele_eta: 2.5
@@ -100,4 +109,14 @@ ee:
   ele_convVeto: true
   ele_ID: true
   ele_iso_f : true
+  ele_iso : 0.2
+eextra: 
+  ele_pt: 10.
+  ele_eta: 2.5
+  ele_dxy: 0.045
+  ele_dz: 0.2
+  ele_lostHits: 1
+  ele_convVeto: true
+  ele_ID: false
+  ele_iso_f : false
   ele_iso : 0.2

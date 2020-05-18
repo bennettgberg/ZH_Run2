@@ -77,6 +77,40 @@ def getTauList(channel, entry, pairList=[],printOn=False) :
     return tauList
 
 
+def getGoodTauList(channel, entry, printOn=False) :
+    """ tauFun.getTauList(): return a list of taus that 
+                             pass the basic selection cuts               
+    """
+
+    if entry.nTau == 0: return []
+
+    tauList = []
+    tt = selections['tt'] # selections for H->tau(h)+tau(h)
+    for j in range(entry.nTau):    
+        # apply tau(h) selections 
+        if entry.Tau_pt[j] < tt['tau_pt']: continue
+        if abs(entry.Tau_eta[j]) > tt['tau_eta']: continue
+        if abs(entry.Tau_dz[j]) > tt['tau_dz']: continue
+        if not entry.Tau_idDecayModeNewDMs[j]: continue
+	if  entry.Tau_decayMode[j] == 5 or entry.Tau_decayMode[j] == 6 : continue
+        if abs(entry.Tau_charge[j]) != 1: continue
+
+        if tt['tau_vJet'] > 0  and not ord(entry.Tau_idDeepTau2017v2p1VSjet[j]) & tt['tau_vJet'] > 0 :
+            if printOn : print("        fail DeepTau vs. Jet={0:d}".format(ord(entry.Tau_idDeepTau2017v2p1VSjet[j])))
+            continue
+	if tt['tau_vEle'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSe[j]) & tt['tau_vEle'] > 0 :
+            if printOn : print("        fail DeepTau vs. ele={0:d}".format(ord(entry.Tau_idDeepTau2017v2p1VSe[j])))
+            continue
+        if tt['tau_vMu'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSmu[j]) & tt['tau_vMu'] > 0 :
+            if printOn : print("        fail DeepTau vs.  mu={0:d}".format(ord(entry.Tau_idDeepTau2017v2p1VSmu[j])))
+            continue
+
+        tauList.append(j)
+    
+    return tauList
+
+
+
 def tauDR(entry, j1,j2) :
     if j1 == j2 : return 0. 
     phi1, eta1, phi2, eta2 = entry.Tau_phi[j1], entry.Tau_eta[j1], entry.Tau_phi[j2], entry.Tau_eta[j2]
@@ -592,11 +626,6 @@ def compareETauPair(entry,pair1,pair2) :
                 if entry.Tau_pt[j2] > entry.Tau_pt[j1] : return True
     return False 
 
-
-
-
-
-
 def getBestETauPair(entry,cat,pairList=[],printOn=False) :
 
     if printOn : print("Entering getBestETauPair")
@@ -613,8 +642,225 @@ def getBestETauPair(entry,cat,pairList=[],printOn=False) :
     return tauPairList[0]
 
 
+def getEEPairs(entry, cat='ee', pairList=[], printOn=False):
+    
+    if printOn: print ("Entering getEEPairs(): nElectron={0:d}".format(entry.nElectron))
+
+    # need a sufficient number of leptons
+    if entry.nElectron < 2: return []
+    if cat == 'eeee' and entry.nElectron < 4: return []
+    
+    selected_elecs = []
+    ee = selections['et'] # impose selections for tau(ele) on each electron
+    
+    # get a list of suitable electrons
+    for i in range(entry.nElectron):
+        
+        if printOn: print("Electron i={0:d}".format(i))
+        
+        if abs(entry.Electron_dxy[i]) > ee['ele_dxy']:
+            if printOn: print("\t failed dxy={0:f}".format(entry.Electron_dxy[i]))
+            continue
+        if abs(entry.Electron_dz[i]) > ee['ele_dz']:
+            if printOn: print("\t failed dz={0:f}".format(entry.Electron_dz[i]))
+            continue
+        if ee['ele_ID']:
+            if not entry.Electron_mvaFall17V2noIso_WP90[i]:
+                if printOn: print("\t failed mva={0}".format(entry.Electron_mvaFall17V2noIso_WP90[i]))
+                continue
+        if ord(entry.Electron_lostHits[i]) > ee['ele_lostHits']:
+            if printOn: print("\t failed losthits={0}".format(entry.Electron_lostHits[i]))
+            continue
+        if ee['ele_convVeto']:
+            if not entry.Electron_convVeto[i]:
+                if printOn: print("\t failed convVeto={0}".format(entry.Electron_convVeto[i]))
+                continue
+        if ee['ele_iso_f']:
+            if entry.Electron_pfRelIso03_all[i] > ee['ele_iso']:
+                if printOn: print("\t failed convVeto={0:f}".format(entry.Electron_pfRelIso03_all[i]))
+                continue
+        if entry.Electron_pt[i] < ee['ele_pt']:
+            if printOn: print("\t failed pt={0:f}".format(entry.Electron_pt[i]))
+            continue
+
+        ele_eta, ele_phi = entry.Electron_eta[i], entry.Electron_phi[i]
+        if abs(ele_eta) > ee['ele_eta']:
+            if printOn: print("\t failed eta={0:f}".format(entry.Electron_eta[i]))
+            continue
+        
+        DR0 = lTauDR(ele_eta,ele_phi,pairList[0]) # l1 vs. e1
+        DR1 = lTauDR(ele_eta,ele_phi,pairList[1]) # l2 vs. e2
+        if DR0 < ee['lt_DR'] or DR1 < ee['lt_DR']:
+            if printOn: print("\t failed DR(l_i,e) check: DR0={0:f} DR1={1:f}".format(DR0,DR1))
+            continue
+
+        selected_elecs.append(i)
+
+    # pair up suitable electrons
+    ee_pairs = []
+    for i in selected_elecs:
+        for j in selected_elecs:
+            
+            if (j <= i): continue
+            if printOn: print("\t considering (i,j)=({0:d}, {1:d})".format(i, j))
+            
+            e1_eta, e1_phi = entry.Electron_eta[i], entry.Electron_phi[i]
+            e2_eta, e2_phi = entry.Electron_eta[j], entry.Electron_eta[j]
+            dPhi = min(abs(e1_phi-e2_phi), 2.*pi-abs(e1_phi-e2_phi))
+            DR = sqrt(dPhi**2 + (e1_eta-e2_eta)**2)
+
+            if DR < ee['tt_DR']:
+                if printOn: print("\t failed eeDR={0:f}".format(DR))
+                continue
+            
+            # store in leading, sub-leading order
+            if (entry.Electron_pt[i] > entry.Electron_pt[j]):
+                ee_pairs.append([i,j])
+            else: ee_pairs.append([j,i])
+
+    return ee_pairs
+
+
+def compareEEPairs(entry, pair1, pair2):
+    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+    
+    if entry.Electron_pfRelIso03_all[i2]  < entry.Electron_pfRelIso03_all[i1]:
+        if entry.Electron_pfRelIso03_all[j2] <= entry.Electron_pfRelIso03_all[j1]:
+            return True
+
+    if entry.Electron_pfRelIso03_all[j2] < entry.Electron_pfRelIso03_all[j1]:
+         if entry.Electron_pfRelIso03_all[i2]  <= entry.Electron_pfRelIso03_all[i1]:
+             return True
+
+    if entry.Electron_pfRelIso03_all[i1] == entry.Electron_pfRelIso03_all[i2]:
+        if entry.Electron_pfRelIso03_all[j1] == entry.Electron_pfRelIso03_all[j2]:
+            if (entry.Electron_pt[i2]+entry.Electron_pt[j2]) > (entry.Electron_pt[i1]+entry.Electron_pt[j1]):
+                return True
+                
+    return False
+
+
+def getBestEEPair(entry, cat, pairList=[], printOn=False):
+    
+    if printOn: print("Entering getBestEEPair")
+    
+    ee_pairs = getEEPairs(entry, cat=cat, pairList=pairList, printOn=printOn)
+    for i in range(len(ee_pairs)-1, 0, -1):
+        if compareEEPairs(entry, ee_pairs[i], ee_pairs[i-1]):
+            ee_pairs[i-1], ee_pairs[i] = ee_pairs[i], ee_pairs[i-1]
+
+    if len(ee_pairs) == 0: return []
+    return ee_pairs[0]
+
+
+def getMuMuPairs(entry, cat='mm', pairList=[], printOn=False):
+    
+    if entry.nMuon < 2:
+        if printOn: print ("Entering getMuMuPairs, failing nMuon={0:d}".format(entry.nMuon))
+        return []
+    if cat == 'mmmm' and entry.nMuon < 4: return []
+
+    if printOn: print("Entering tauFun.getMuMuPairs() nMuon={0:d}".format(entry.nMuon))
+
+    mm = selections['mt'] # inherit selections for tau(mu)
+    selected_muons = []
+    for i in range(entry.nMuon):
+        
+        if mm['mu_type']:
+            if not (entry.Muon_isGlobal[i] or entry.Muon_isTracker[i]) :
+                if printOn: print("\t fail mu_type Global or Tracker={0}".format(entry.Muon_isGlobal[i]))
+                continue
+        if mm['mu_ID']:
+            if not (entry.Muon_mediumId[i] or entry.Muon_tightId[i]) :
+                if printOn: print("\t fail mu_ID mediumId={0}".format(entry.Muon_mediumId[i]))
+                continue
+        if abs(entry.Muon_dxy[i]) > mm['mu_dxy']:
+            if printOn: print("\t fail mu_dxy={0:f}".format(entry.Muon_dxy[i]))
+            continue
+        if abs(entry.Muon_dz[i]) > mm['mu_dz']:
+            if printOn: print("\t fail mu_dz={0:f}".format(entry.Muon_dz[i]))
+            continue
+
+        mu_eta, mu_phi = entry.Muon_eta[i], entry.Muon_phi[i]
+        if entry.Muon_pt[i] < mm['mu_pt']:
+            if printOn: print("\t fail mu_pt={0:f}".format(entry.Muon_pt[i]))
+            continue
+        if abs(mu_eta) > mm['mu_eta']:
+            if printOn: print("\t fail mu_eta={0:f}".format(entry.Muon_eta[i]))
+            continue
+        if  mm['mu_iso_f'] and entry.Muon_pfRelIso04_all[i] > mm['mu_iso']:
+            if printOn: print("\t fail mu_iso={0:f}".format(entry.Muon_pfRelIso04_all[i]))
+            continue
+
+        DR0 = lTauDR(mu_eta,mu_phi,pairList[0]) # l1 vs. m
+        DR1 = lTauDR(mu_eta,mu_phi,pairList[1]) # l2 vs. m
+        if DR0 < mm['lt_DR'] or DR1 < mm['lt_DR']:
+            if printOn : print("\t fail muon DR  DR0={0:f} DR1={1:f}".format(DR0,DR1))
+            continue
+        if printOn : print("\t Good muon i={0:d}".format(i))
+    
+        selected_muons.append(i)
+        
+    # pair up the selected muons
+    mm_pairs = []    
+    for i in selected_muons:
+        for j in selected_muons:
+           
+            if j <= i: continue
+            if printOn: print("\t considering (i,j)=({0:d}, {1:d})".format(i, j))
+            
+            m1_eta, m1_phi = entry.Muon_eta[i], entry.Muon_phi[i]
+            m2_eta, m2_phi = entry.Muon_eta[j], entry.Muon_phi[j]
+            
+            dPhi = min(abs(m1_phi-m2_phi), 2.*pi-abs(m1_phi-m2_phi))
+            DR = sqrt(dPhi**2 + (m1_eta-m2_eta)**2)
+            if DR < mm['mt_DR']:
+                if printOn: print("\t fail mmDR DR={0:f}".format(DR))
+                continue
+            
+            # store in [leading, sub-leading] order
+            if entry.Muon_pt[i] > entry.Muon_pt[j]: 
+                mm_pairs.append([i,j])
+            else: mm_pairs.append([j,i])
+            
+    return mm_pairs
+
+
+def compareMuMuPairs(entry, pair1, pair2):
+    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+
+    if entry.Muon_pfRelIso04_all[i2]  < entry.Muon_pfRelIso04_all[i1]:
+        if entry.Muon_pfRelIso04_all[j2] <= entry.Muon_pfRelIso04_all[j1]:
+            return True
+
+    if entry.Muon_pfRelIso04_all[j2] < entry.Muon_pfRelIso04_all[j1]:
+         if entry.Muon_pfRelIso04_all[i2]  <= entry.Muon_pfRelIso04_all[i1]:
+             return True
+
+    if entry.Muon_pfRelIso04_all[i1] == entry.Muon_pfRelIso04_all[i2]:
+        if entry.Muon_pfRelIso04_all[j1] == entry.Muon_pfRelIso04_all[j2]:
+            if (entry.Muon_pt[i2]+entry.Muon_pt[j2]) > (entry.Muon_pt[i1]+entry.Muon_pt[j1]):
+                return True
+    
+    return False
+
+
+def getBestMuMuPair(entry, cat='mm', pairList=[], printOn=False):
+    
+    # form all possible pairs that satisfy DR requirement
+    if printOn: print("Entering getBestMuMuPair()")
+    mm_pairs = getMuMuPairs(entry,cat=cat,pairList=pairList,printOn=printOn)
+
+    for i in range(len(mm_pairs)-1,0,-1) :
+        if compareMuMuPairs(entry, mm_pairs[i], mm_pairs[i-1]) :
+            mm_pairs[i-1], mm_pairs[i] = mm_pairs[i], mm_pairs[i-1]
+
+    if len(mm_pairs) == 0 : return []
+    return mm_pairs[0]
+
+
 # select a muon for the Z candidate
-def goodMuon(entry, j, AZH=False ):
+def goodMuon(entry, j ):
     """ tauFun.goodMuon(): select good muons
                            for Z -> mu + mu
     """
@@ -623,9 +869,9 @@ def goodMuon(entry, j, AZH=False ):
     if entry.Muon_pt[j] < mm['mu_pt']: return False
     if abs(entry.Muon_eta[j]) > mm['mu_eta']: return False
     if mm['mu_iso_f'] and entry.Muon_pfRelIso04_all[j] >  mm['mu_iso']: return False
-    if mm['mu_ID'] and not AZH :
+    if mm['mu_ID'] :
         if not (entry.Muon_mediumId[j] or entry.Muon_tightId[j]): return False
-    if mm['mu_ID'] and AZH and not entry.Muon_looseId[j] : return False
+    if mm['mu_ID'] and not entry.Muon_looseId[j] : return False
     if abs(entry.Muon_dxy[j]) > mm['mu_dxy']: return False 
     if abs(entry.Muon_dz[j]) > mm['mu_dz']: return False
     if mm['mu_type'] :
@@ -633,15 +879,15 @@ def goodMuon(entry, j, AZH=False ):
              
     return True 
 
-def makeGoodMuonList(entry, AZH=False) :
+def makeGoodMuonList(entry) :
     goodMuonList = []
     for i in range(entry.nMuon) :
-        if goodMuon(entry, i, AZH) : goodMuonList.append(i)
+        if goodMuon(entry, i) : goodMuonList.append(i)
     #print("In tauFun.makeGoodMuonList = {0:s}".format(str(goodMuonList)))
     return goodMuonList
 
 # select an electron for the Z candidate
-def goodElectron(entry, j, AZH=False) :
+def goodElectron(entry, j) :
     """ tauFun.goodElectron(): select good electrons 
                                for Z -> ele + ele
     """
@@ -658,33 +904,100 @@ def goodElectron(entry, j, AZH=False) :
 
     return True 
 
-def makeGoodElectronList(entry, AZH=False) :
+def makeGoodElectronList(entry) :
     goodElectronList = []
     for i in range(entry.nElectron) :
-        if goodElectron(entry, i, AZH=AZH) : goodElectronList.append(i)
+        if goodElectron(entry, i) : goodElectronList.append(i)
     return goodElectronList
 
-def eliminateCloseLeptons(entry, goodElectronList, goodMuonList) :
-    badMuon, badElectron = [], []
-    for mu1 in goodMuonList :
+
+##############
+def goodMuonExtraLepton(entry, j):
+    """ tauFun.goodMuon(): select good muons
+                           for Z -> mu + mu
+    """
+    
+    mm = selections['mextra'] # selections for Z->mumu
+    if entry.Muon_pt[j] < mm['mu_pt']: return False
+    if abs(entry.Muon_eta[j]) > mm['mu_eta']: return False
+    if mm['mu_iso_f'] and entry.Muon_pfRelIso04_all[j] >  mm['mu_iso']: return False
+    if mm['mu_ID'] and not (entry.Muon_mediumId[j] or entry.Muon_tightId[j]): return False
+    if abs(entry.Muon_dxy[j]) > mm['mu_dxy']: return False 
+    if abs(entry.Muon_dz[j]) > mm['mu_dz']: return False
+    if mm['mu_type'] :
+        if not (entry.Muon_isGlobal[j] or entry.Muon_isTracker[j]) : return False
+             
+    return True 
+
+def makeGoodMuonListExtraLepton(entry, listMu) :
+    goodExtraMuonList = []
+    for i in range(entry.nMuon) :
+        if i not in listMu and goodMuonExtraLepton(entry, i) : goodExtraMuonList.append(i)
+    #print("In tauFun.makeGoodMuonList = {0:s}".format(str(goodMuonList)))
+    return goodExtraMuonList
+
+# select an electron for the Z candidate
+def goodElectronExtraLepton(entry, j) :
+    """ tauFun.goodElectron(): select good electrons 
+                               for Z -> ele + ele
+    """
+    ee = selections['eextra'] # selections for Z->ee
+    if entry.Electron_pt[j] < ee['ele_pt']: return False
+    if abs(entry.Electron_eta[j]) > ee['ele_eta']: return False
+    if abs(entry.Electron_dxy[j]) > ee['ele_dxy']: return False
+    if abs(entry.Electron_dz[j]) > ee['ele_dz']: return False
+    if ord(entry.Electron_lostHits[j]) > ee['ele_lostHits']: return False
+    if ee['ele_convVeto']:
+        if not entry.Electron_convVeto[j]: return False
+    if ee['ele_ID']:
+        if not entry.Electron_mvaFall17V2noIso_WP90[j] : return False
+
+    return True 
+
+def makeGoodElectronListExtraLepton(entry, listEl) :
+    goodExtraElectronList = []
+    for i in range(entry.nElectron) :
+        if i not in listEl and goodElectronExtraLepton(entry, i) : goodExtraElectronList.append(i)
+    return goodExtraElectronList
+
+def eliminateCloseTauAndLepton(entry, goodElectronList, goodMuonList, goodTauList) :
+
+    badMuon, badElectron, badTau = [], [], []
+    # check tau vs tau
+    for tau1 in goodTauList :
+        for tau2 in goodTauList :
+            if tau1 == tau2 : continue
+            dEta = abs(entry.Tau_eta[tau1] - entry.Tau_eta[tau2])
+            if dEta > 0.3 : continue
+            dPhi = abs(entry.Tau_phi[tau1] - entry.Tau_phi[tau2])
+            if dPhi > 0.3 : continue
+            if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
+            if not (tau1 in badTau) and entry.Tau_pt[tau1] < entry.Tau_pt[tau2] : badTau.append(tau1)
+            if not (tau2 in badTau) and entry.Tau_pt[tau1] > entry.Tau_pt[tau2] : badTau.append(tau2)
+
+        #check tau vs mu
         for mu2 in goodMuonList :
-            if mu1 == mu2 : continue
-            dEta = abs(entry.Muon_eta[mu1] - entry.Muon_eta[mu2])
+            dEta = abs(entry.Tau_eta[tau1] - entry.Muon_eta[mu2])
             if dEta > 0.3 : continue
-            dPhi = abs(entry.Muon_phi[mu1] - entry.Muon_phi[mu2])
+            dPhi = abs(entry.Tau_phi[tau1] - entry.Muon_phi[mu2])
             if dPhi > 0.3 : continue
             if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
-            if not (mu1 in badMuon) : badMuon.append(mu1)
-            if not (mu2 in badMuon) : badMuon.append(mu2)
+            if not (tau1 in badTau) and entry.Tau_pt[tau1] < entry.Muon_pt[mu2] : badTau.append(tau1)
+            if not (mu2 in badMuon) and entry.Tau_pt[tau1] > entry.Muon_pt[mu2] : badMuon.append(mu2)
+
+        #check tau vs el
         for e2 in goodElectronList :
-            dEta = abs(entry.Muon_eta[mu1] - entry.Electron_eta[e2])
+            dEta = abs(entry.Tau_eta[tau1] - entry.Electron_eta[e2])
             if dEta > 0.3 : continue
-            dPhi = abs(entry.Muon_phi[mu1] - entry.Electron_phi[e2])
+            dPhi = abs(entry.Tau_phi[tau1] - entry.Electron_phi[e2])
             if dPhi > 0.3 : continue
             if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
-            if not (mu1 in badMuon) : badMuon.append(mu1)
+            if not (tau1 in badTau) : badTau.append(tau1)
             if not (e2 in badElectron) : badElectron.append(e2)
-            
+            if not (tau1 in badTau) and entry.Tau_pt[tau1] < entry.Electron_pt[e2] : badTau.append(tau1)
+            if not (e2 in badElectron) and entry.Tau_pt[tau1] > entry.Electron_pt[e2] : badElectron.append(e2)
+
+    # check el vs el        
     for e1 in goodElectronList :
         for e2 in goodElectronList :
             if e1 == e2 : continue 
@@ -693,8 +1006,73 @@ def eliminateCloseLeptons(entry, goodElectronList, goodMuonList) :
             dPhi = abs(entry.Electron_phi[e1] - entry.Electron_phi[e2])
             if dPhi > 0.3 : continue
             if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
-            if not (e1 in badElectron) : badElectron.append(e1)
-            if not (e2 in badElectron) : badElectron.append(e2)
+            if not (e1 in badElectron) and entry.Electron_pt[e1] < entry.Electron_pt[e2] : badElectron.append(e1)
+            if not (e2 in badElectron) and entry.Electron_pt[e1] > entry.Electron_pt[e2] : badElectron.append(e2)
+
+    #check mu vs mu and vs el
+    for mu1 in goodMuonList :
+        for mu2 in goodMuonList :
+            if mu1 == mu2 : continue
+            dEta = abs(entry.Muon_eta[mu1] - entry.Muon_eta[mu2])
+            if dEta > 0.3 : continue
+            dPhi = abs(entry.Muon_phi[mu1] - entry.Muon_phi[mu2])
+            if dPhi > 0.3 : continue
+            if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
+            if not (mu1 in badMuon) and entry.Muon_pt[mu1] < entry.Muon_pt[mu2] : badMuon.append(mu1)
+            if not (mu2 in badMuon) and entry.Muon_pt[mu1] > entry.Muon_pt[mu2] : badMuon.append(mu2)
+
+
+        for e2 in goodElectronList :
+            dEta = abs(entry.Muon_eta[mu1] - entry.Electron_eta[e2])
+            if dEta > 0.3 : continue
+            dPhi = abs(entry.Muon_phi[mu1] - entry.Electron_phi[e2])
+            if dPhi > 0.3 : continue
+            if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
+            if not (mu1 in badMuon) and entry.Muon_pt[mu1] < entry.Electron_pt[e2] : badMuon.append(mu1)
+            if not (e2 in badElectron) and entry.Muon_pt[mu1] > entry.Electron_pt[e2] : badElectron.append(e2)
+
+
+
+    for bade in badElectron : goodElectronList.remove(bade)
+    for badmu in badMuon : goodMuonList.remove(badmu)
+    for badtau in badTau : goodTauList.remove(badtau)
+
+    return goodElectronList, goodMuonList, goodTauList
+
+
+def eliminateCloseLeptons(entry, goodElectronList, goodMuonList) :
+    badMuon, badElectron = [], []
+    if len(goodMuonList)> 1 :
+	for mu1 in goodMuonList :
+	    for mu2 in goodMuonList :
+		if mu1 == mu2 : continue
+		dEta = abs(entry.Muon_eta[mu1] - entry.Muon_eta[mu2])
+		if dEta > 0.3 : continue
+		dPhi = abs(entry.Muon_phi[mu1] - entry.Muon_phi[mu2])
+		if dPhi > 0.3 : continue
+		if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
+		if not (mu1 in badMuon) and entry.Muon_pt[mu1] < entry.Muon_pt[mu2] : badMuon.append(mu1)
+		if not (mu2 in badMuon) and entry.Muon_pt[mu1] > entry.Muon_pt[mu2] : badMuon.append(mu2)
+
+	    for e2 in goodElectronList :
+		dEta = abs(entry.Muon_eta[mu1] - entry.Electron_eta[e2])
+		if dEta > 0.3 : continue
+		dPhi = abs(entry.Muon_phi[mu1] - entry.Electron_phi[e2])
+		if dPhi > 0.3 : continue
+		if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
+		if not (mu1 in badMuon) and entry.Muon_pt[mu1] < entry.Electron_pt[e2] : badMuon.append(mu1)
+		if not (e2 in badElectron) and entry.Muon_pt[mu1] > entry.Electron_pt[e2] : badElectron.append(e2)
+    if len(goodElectronList)> 1 :        
+	for e1 in goodElectronList :
+	    for e2 in goodElectronList :
+		if e1 == e2 : continue 
+		dEta = abs(entry.Electron_eta[e1] - entry.Electron_eta[e2])
+		if dEta > 0.3 : continue
+		dPhi = abs(entry.Electron_phi[e1] - entry.Electron_phi[e2])
+		if dPhi > 0.3 : continue
+		if sqrt(dEta*dEta + dPhi*dPhi) > 0.3 : continue
+		if not (e1 in badElectron) and entry.Electron_pt[e1] < entry.Electron_pt[e2] : badElectron.append(e1)
+		if not (e2 in badElectron) and entry.Electron_pt[e1] > entry.Electron_pt[e2] : badElectron.append(e2)
 
     for bade in badElectron : goodElectronList.remove(bade)
     for badmu in badMuon : goodMuonList.remove(badmu)
@@ -753,6 +1131,11 @@ def findMuTrigger(goodMuonList,entry,era):
     return MutrigList
 
 #edit this function for HAA
+def ComparepT(El, Mu, entry) :
+    if entry.Electron_pt[El] > entry.Muon_pt[Mu] : return True
+    else : return False
+
+#MUST OPTIMIZE THIS
 def findZ(goodElectronList, goodMuonList, entry) :
     mm = selections['mm'] # H->tau(mu)+tau(h) selections
     selpair,pairList, mZ, bestDiff = [],[], 91.19, 99999. 
@@ -770,9 +1153,9 @@ def findZ(goodElectronList, goodMuonList, entry) :
                     cand = e1 + e2
                     mass = cand.M()
 		    #if mass < 60 or mass > 120 : continue
-                    #if abs(mass-mZ) < bestDiff :
-                    if (abs(mass) < 60.) and (abs(mass) > 15.):
-                        #bestDiff = abs(mass-mZ)
+                    if abs(mass-mZ) < bestDiff :
+                    #if (abs(mass) < 60.) and (abs(mass) > 15.):
+                        bestDiff = abs(mass-mZ)
                         if entry.Electron_charge[ii] > 0. :
                             pairList = [e1,e2]
                             selpair = [ii,jj]
@@ -796,9 +1179,9 @@ def findZ(goodElectronList, goodMuonList, entry) :
                     cand = mu1 + mu2
                     mass = cand.M()
 		    #if mass < 60 or mass > 120 : continue
-                    #if abs(mass-mZ) < bestDiff :
-                    if (abs(mass) < 60.) and (abs(mass) > 15.):
-                        #bestDiff = abs(mass-mZ)
+                    if abs(mass-mZ) < bestDiff :
+                    #if (abs(mass) < 60.) and (abs(mass) > 15.):
+                        bestDiff = abs(mass-mZ)
                         if entry.Muon_charge[ii] > 0. :
                             pairList = [mu1,mu2]
                             selpair = [ii,jj]
@@ -864,6 +1247,17 @@ def numberToCat(number) :
     return cat[number]
     
 
+def catToNumber3L(cat) :
+    #number = { 'eee':1, 'eem':2, 'eet':3, 'mme':4, 'mmm':5, 'mmt':6}
+    #number = { 'ee':1, 'mm':2}
+    number = { 'eeee':1, 'eemm':2 , 'mmee':3, 'mmmm':4, 'eee':5, 'eem':6, 'mme':7, 'mmm':8,'ee':9, 'mm':10 }
+    return number[cat]
+
+def numberToCat3L(number) :
+    #cat = { 1:'eee', 2:'eem', 3:'eet', 4:'mme', 5:'mmm', 6:'mmt' }
+    #cat = { 1:'ee', 2:'mm' }
+    cat= { 1:'eeee', 2:'eemm' , 3:'mmee', 4:'mmmm', 5:'eee', 6:'eem', 7:'mme', 8:'mmm', 9:'ee', 10:'mm'}
+    return cat[number]
 
 
 

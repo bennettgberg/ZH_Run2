@@ -34,6 +34,7 @@ def getArgs() :
     parser.add_argument("-s","--selection",default='HAA',help="is this for the ZH,AZH, or HAA analysis?")
     parser.add_argument("-u","--unique",default='none',help="CSV file containing list of unique events for sync studies.") 
     parser.add_argument("-w","--weights",default=False,type=int,help="to re-estimate Sum of Weights")
+    parser.add_argument("-j","--doSystematics",type=str, default='false',help="do JME systematics")
     
     return parser.parse_args()
 
@@ -49,6 +50,7 @@ cutCounterGenWeight = {}
 cats = ['mmet','mmmt','mmtt','mmem']
 #cats = ['mmmt']
 #cats = ['mmtt']
+doJME  = args.doSystematics.lower() == 'true' or args.doSystematics.lower() == 'yes' or args.doSystematics == '1'
 
 for cat in cats : 
     cutCounter[cat] = GF.cutCounter()
@@ -84,6 +86,14 @@ else :
     if args.year == 2017 : CJ = GF.checkJSON(filein='Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt')
     if args.year == 2018 : CJ = GF.checkJSON(filein='Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt')
 
+varSystematics=['']
+if doJME : varSystematics= ['', 'nom', 'jesTotalUp', 'jesTotalDown', 'jerUp', 'jerDown']
+if not MC : 
+    if doJME : varSystematics= ['', 'nom']
+
+if not doJME  : varSystematics=['']
+
+print 'systematics', doJME, varSystematics
 
 era=str(args.year)
 
@@ -131,6 +141,9 @@ if args.weights > 0 :
             hDYxGenweightsArr[i].Write()
 
     hWeight.Write()
+    if args.weights == 2 : 
+        fW.Close()
+        sys.exit()
 
 #############end weights
 
@@ -165,29 +178,22 @@ for count, e in enumerate(inTree) :
         #print("Event not in JSON: Run:{0:d} LS:{1:d}".format(e.run,e.luminosityBlock))
         continue
 
-    for cat in cats: cutCounter[cat].count('InJSON')
+    for cat in cats: 
+        cutCounter[cat].count('InJSON')
+	if  MC :   cutCounterGenWeight[cat].countGenWeight('InJSON', e.genWeight)
     
     MetFilter = GF.checkMETFlags(e,args.year)
     if MetFilter : continue
     
-    for cat in cats: cutCounter[cat].count('METfilter') 
+    for cat in cats: 
+        cutCounter[cat].count('METfilter') 
+	if  MC :   cutCounterGenWeight[cat].countGenWeight('METfilter', e.genWeight)
 
     if unique :
         if e.event in uniqueEvents :
             for cat in cats: cutCounter[cat].count('Unique') 
         else :
             continue
-    '''
-    if args.year == 2016 :
-        if not (e.HLT_Ele27_eta2p1_WPTight_Gsf or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
-                or e.HLT_Ele25_eta2p1_WPTight_Gsf or e.HLT_IsoMu24 or e.HLT_IsoTkMu24 or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ
-                or e.HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ or e.HLT_IsoMu27) : continue
-
-    if (args.year == 2017 or args.year == 2018) :
-        if not (e.HLT_IsoMu24 or e.HLT_IsoMu27 or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8
-                or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8 or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ 
-                or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL and not e.HLT_Ele35_WPTight_Gsf and not e.HLT_Ele32_WPTight_Gsf ) : continue
-    '''
     if not tauFun.goodTrigger(e, args.year) : continue
     
     for cat in cats: 
@@ -218,76 +224,38 @@ for count, e in enumerate(inTree) :
 
         
         if lepMode == 'ee' :
-            ''' 
-            passCut = True 
-            if  args.year == 2016 and not e.HLT_Ele27_eta2p1_WPTight_Gsf and not e.HLT_Ele25_eta2p1_WPTight_Gsf: passCut = False 
-            if (args.year == 2017 or args.year == 2018) and not e.HLT_Ele35_WPTight_Gsf and not e.HLT_Ele32_WPTight_Gsf: passCut = False
-            if not passCut :
-                if unique :
-                    print("Trigger Fail: Event ID={0:d} cat={1:s}".format(e.event,cat))
-                    GF.printEvent(e)
-                    if MC : GF.printMC(e)
-                continue
-           
-            for cat in cats[:4]: 
-	        cutCounter[cat].count('Trigger')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('Trigger', e.genWeight)
-            '''     
-            if len(goodElectronList) < 2 :
-                if unique :
-                    print("GoodLeptons Fail: : Event ID={0:d} cat={1:s}".format(e.event,cat))
-                    GF.printEvent(e)
-                    if MC : GF.printMC(e)
-                continue
-            cutCounter[cat].count('GoodLeptons')
+            if len(goodElectronList) < 2 : continue
+            for cat in cats[:4] :
+                cutCounter[cat].count('GoodLeptons')
+	        if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
 
             pairList, lepList = tauFun.findZ(goodElectronList,[], e)
-            if len(lepList) != 2 :
-                if unique :
-                    print("LepList Fail: : Event ID={0:d} cat={1:s}".format(e.event,cat))
-                    GF.printEvent(e)
-                    if MC : GF.printMC(e)
-                continue
-            
-        
-        if lepMode == 'mm' :
-            '''
-            if not e.HLT_IsoMu24 and not e.HLT_IsoMu27 :
-                if unique :
-                    print("Trigger Fail: Event ID={0:d} cat={1:s}".format(e.event,cat))
-                    GF.printEvent(e)
-                    if MC : GF.printMC(e)
-                continue
-            
-            for cat in cats[4:]: 
-	        cutCounter[cat].count('Trigger')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('Trigger', e.genWeight)
-            '''
-            if len(goodMuonList) < 2 : continue
-            cutCounter[cat].count('GoodLeptons')
-
-            pairList, lepList = tauFun.findZ([],goodMuonList, e)
             if len(lepList) != 2 : continue
-
-        if len(pairList) < 1 : continue
-
-        if lepMode == 'ee' :
             for cat in cats[:4] : 
 	        cutCounter[cat].count('LeptonPair')
 	        if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonPair', e.genWeight)
+        
         if lepMode == 'mm' :
+            if len(goodMuonList) < 2 : continue
+            for cat in cats[4:] :
+                cutCounter[cat].count('GoodLeptons')
+	        if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
+
+            pairList, lepList = tauFun.findZ([],goodMuonList, e)
+            if len(lepList) != 2 : continue
             for cat in cats[4:] : 
 	        cutCounter[cat].count('LeptonPair')
 	        if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonPair', e.genWeight)
-                
+
         LepP, LepM = pairList[0], pairList[1]
         M = (LepM + LepP).M()
+	
         if not tauFun.mllCut(M) :
             if unique :
                 print("Zmass Fail: : Event ID={0:d} cat={1:s} M={2:.2f}".format(e.event,cat,M))
                 #GF.printEvent(e)
                 #if MC : GF.printMC(e)
-            continue ##cut valid for both AZH and ZHa
+            continue ##cut valid for both AZH and ZH
 
         if lepMode == 'ee' :
             for cat in cats[:4]: 
@@ -297,36 +265,10 @@ for count, e in enumerate(inTree) :
             for cat in cats[4:]: 
 	        cutCounter[cat].count('FoundZ')
 	        if  MC :   cutCounterGenWeight[cat].countGenWeight('FoundZ', e.genWeight)
-        
         for tauMode in ['et','mt','tt','em'] :
             if args.category != 'none' and tauMode != args.category[2:] : continue
             cat = lepMode + tauMode
-
-            '''
-            if isAZH :
-                passCut = True 
-                if cat =='eeet' and (len(goodMuonList) > 0 or len(goodElectronList) > 3) : passCut = False 
-                if cat =='eemt' and (len(goodMuonList) > 1 or len(goodElectronList) > 2) : passCut = False 
-                if cat =='eeem' and (len(goodMuonList) > 1 or len(goodElectronList) > 3) : passCut = False 
-                if cat =='eett' and (len(goodMuonList) > 0 or len(goodElectronList) > 2) : passCut = False 
-
-                if cat =='mmet' and (len(goodMuonList) > 2 or len(goodElectronList) > 1) : passCut = False 
-                if cat =='mmmt' and (len(goodMuonList) > 3 or len(goodElectronList) > 0) : passCut = False 
-                if cat =='mmem' and (len(goodMuonList) > 3 or len(goodElectronList) > 1) : passCut = False 
-                if cat =='mmtt' and (len(goodMuonList) > 2 or len(goodElectronList) > 0) : passCut = False 
-
-                if not passCut :
-                    if unique :
-                        print("isAZH Fail: : Event ID={0:d} cat={1:s}".format(e.event,cat))
-                        GF.printEvent(e)
-                    continue 
-            '''
-            
             if tauMode == 'tt' :
-                #if isAZH : tauList = tauFun.getTauListAZH(cat, e, pairList=pairList)
-                #else : tauList = tauFun.getTauListv3(cat, e, pairList=pairList)
-                #if isAZH : tauList = tauFun.getTauList(cat, e, pairList=pairList)
-                #else :
                 tauList = tauFun.getTauList(cat, e, pairList=pairList)
                 bestTauPair = tauFun.getBestTauPair(cat, e, tauList )
                                     
@@ -336,7 +278,8 @@ for count, e in enumerate(inTree) :
                 bestTauPair = tauFun.getBestMuTauPair(e,cat=cat,pairList=pairList)
             elif tauMode == 'em' :
                 bestTauPair = tauFun.getBestEMuTauPair(e,cat=cat,pairList=pairList)
-		
+	    else : continue
+            
             if len(bestTauPair) < 1 :
                 if unique :
                     print("Tau Pair Fail: Event ID={0:d} cat={1:s}".format(e.event,cat))
@@ -354,33 +297,32 @@ for count, e in enumerate(inTree) :
                     GF.printMC(e)
                 continue
 
-            cutCounter[cat].count("GoodTauPair")
-	    if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodTauPair', e.genWeight)
-
-            #if tauMode == 'tt' and args.testMode.lower() == "vvtight" and not isAZH:
-            #    j1, j2 = bestTauPair[0], bestTauPair[1]
-            #    if ord(e.Tau_idMVAnewDM2017v2[j1]) < 64 : continue
-            #    if ord(e.Tau_idMVAnewDM2017v2[j2]) < 64 : continue
-
             if len(bestTauPair) > 1 :
                 jt1, jt2 = bestTauPair[0], bestTauPair[1]
             else :
                 continue
+            cutCounter[cat].count("GoodTauPair")
+	    if  MC:   cutCounterGenWeight[cat].countGenWeight('GoodTauPair', e.genWeight)
 
             if MC :
-                outTuple.setWeight(PU.getWeight(e.Pileup_nPU)) ## we store the GenWeight * PUweight ?   
+                outTuple.setWeight(PU.getWeight(e.PV_npvs)) 
+                outTuple.setWeightPU(PU.getWeight(e.Pileup_nPU)) 
+                outTuple.setWeightPUtrue(PU.getWeight(e.Pileup_nTrueInt)) 
+		#print 'nPU', e.Pileup_nPU, e.Pileup_nTrueInt, PU.getWeight(e.Pileup_nPU), PU.getWeight(e.Pileup_nTrueInt), PU.getWeight(e.PV_npvs), PU.getWeight(e.PV_npvsGood)
 	    else : 
-                outTuple.setWeight(1.) ## we store weight = 1 for data
+                outTuple.setWeight(1.) 
+                outTuple.setWeightPU(1.) ##
+                outTuple.setWeightPUtrue(1.)
 
 
-            cutCounter[cat].count("VVtightTauPair")
-	    if  MC :   cutCounterGenWeight[cat].countGenWeight('VVtightTauPair', e.genWeight)
+            #cutCounter[cat].count("VVtightTauPair")
+	    #if MC :   cutCounterGenWeight[cat].countGenWeight('VVtightTauPair', e.genWeight)
                         
             #SVFit = True
             SVFit = False
 	    
             if not MC : isMC = False
-            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era,goodMuonList) 
+            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era,doJME, varSystematics) 
 
             if maxPrint > 0 :
                 maxPrint -= 1
@@ -395,51 +337,51 @@ for count, e in enumerate(inTree) :
 dT = time.time() - tStart
 print("Run time={0:.2f} s  time/event={1:.1f} us".format(dT,1000000.*dT/count))
 
+hLabels=[]
+hLabels.append('All')
+hLabels.append('inJSON')
+hLabels.append('METfilter')
+hLabels.append('Trigger')
+hLabels.append('LeptonCount')
+hLabels.append('GoodLeptons')
+hLabels.append('LeptonPair')
+hLabels.append('FoundZ')
+hLabels.append('GoodTauPair')
+
 hCutFlow=[]
 hCutFlowW=[]
-countt=0
-for cat in cats :
+for icat,cat in enumerate(cats) :
     print('\nSummary for {0:s}'.format(cat))
     cutCounter[cat].printSummary()
     hName="hCutFlow_"+str(cat)
     hNameW="hCutFlowWeighted_"+str(cat)
-    hCutFlow.append( TH1D(hName,hName,15,0.5,15.5))
-    if MC  : hCutFlowW.append( TH1D(hNameW,hNameW,15,0.5,15.5))
-    lcount=len(cutCounter[cat].getYield())
+    hCutFlow.append( TH1D(hName,hName,20,0.5,20.5))
+    if MC  : hCutFlowW.append( TH1D(hNameW,hNameW,20,0.5,20.5))
+    #if not MC : lcount=len(cutCounter[cat].getYield()) #lcount stands for how many different values you have
+    #else : lcount=len(cutCounterGenWeight[cat].getYieldWeighted()) #lcount stands for how many different values you have
+    lcount=len(hLabels)
+    print lcount, cat, icat
+    for i in range(len(hLabels)) :
+        hCutFlow[icat].GetXaxis().SetBinLabel(i+1,hLabels[i])
+        if MC : hCutFlowW[icat].GetXaxis().SetBinLabel(i+1,hLabels[i])
+
     for i in range(lcount) :
         #hCutFlow[cat].Fill(1, float(cutCounter[cat].getYield()[i]))
         yields = cutCounter[cat].getYield()[i]
-        hCutFlow[countt].Fill(i+1, float(yields))
-        hCutFlow[countt].GetXaxis().SetBinLabel(i+1,str(cutCounter[cat].getLabels()[i]))
+        hCutFlow[icat].Fill(i+1, float(yields))
 
         if MC : 
 	    yieldsW = cutCounterGenWeight[cat].getYieldWeighted()[i]
-            hCutFlowW[countt].Fill(i+1, float(yieldsW))
-            hCutFlowW[countt].GetXaxis().SetBinLabel(i+1,str(cutCounterGenWeight[cat].getLabels()[i]))
+            hCutFlowW[icat].Fill(i+1, float(yieldsW))
         #print cutCounter[cat].getYield()[i], i, cutCounter[cat].getLabels()[i]
 
     
-    hCutFlow[countt].Sumw2()
-    if MC : hCutFlowW[countt].Sumw2()
-    countt+=1
+    hCutFlow[icat].Sumw2()
+    if MC : hCutFlowW[icat].Sumw2()
+    icat+=1
 
 if not MC : CJ.printJSONsummary()
 
 
 outTuple.writeTree()
-
-
-
-
-
-
-
-
-
-  
-            
-
-    
-    
-
 
