@@ -322,7 +322,7 @@ for count, e in enumerate(inTree) :
             SVFit = False
 	    
             if not MC : isMC = False
-            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era,doJME, varSystematics) 
+            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era, goodMuonList, doJME, varSystematics) 
 
             if maxPrint > 0 :
                 maxPrint -= 1
