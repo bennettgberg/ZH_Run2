@@ -1,0 +1,14 @@
+universe = vanilla
+Executable = HToAAToMuMuTauTau_M40_001.sh
+Output = HToAAToMuMuTauTau_M40_001.out
+Error = HToAAToMuMuTauTau_M40_001.err
+Log = HToAAToMuMuTauTau_M40_001.log
+Proxy_filename = x509up
+Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)
+transfer_input_files = /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/MC/HAA.py, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/MC/MC_2016.root, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/MC/data_pileup_2016.root, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/MC/MCsamples_2016.csv, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/MC/cuts_HAA.yaml, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/funcs/tauFun.py, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/funcs/generalFunctions.py, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/funcs/outTuple.py,/afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/SVFit/FastMTT.h, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/SVFit/MeasuredTauLepton.h, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/SVFit/svFitAuxFunctions.h,/afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/SVFit/FastMTT.cc, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/SVFit/MeasuredTauLepton.cc, /afs/cern.ch/work/s/shigginb/cmssw/HAA/HAA_Run2_May2020_10_2_9/src/ZH_Run2/SVFit/svFitAuxFunctions.cc
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+arguments = $(Proxy_path)
+request_cpus = 2
++JobFlavour  = "tomorrow"
+Queue 1

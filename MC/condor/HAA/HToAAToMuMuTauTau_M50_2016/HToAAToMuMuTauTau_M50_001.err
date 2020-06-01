@@ -1,0 +1,66 @@
+WARNING: In non-interactive mode release checks e.g. deprecated releases, production architectures are disabled.
+[8MB/274.3MB][  2%][=>                                                ][1.143MB/s]  [16MB/274.3MB][  5%][==>                                               ][2MB/s]  [32MB/274.3MB][ 11%][=====>                                            ][3.556MB/s]  [40MB/274.3MB][ 14%][=======>                                          ][4MB/s]  [48MB/274.3MB][ 17%][========>                                         ][4.364MB/s]  [64MB/274.3MB][ 23%][===========>                                      ][5.333MB/s]  [72MB/274.3MB][ 26%][=============>                                    ][5.538MB/s]  [88MB/274.3MB][ 32%][================>                                 ][6.286MB/s]  [96MB/274.3MB][ 34%][=================>                                ][6.4MB/s]  [104MB/274.3MB][ 37%][==================>                               ][6.5MB/s]  [120MB/274.3MB][ 43%][=====================>                            ][7.059MB/s]  [128MB/274.3MB][ 46%][=======================>                          ][7.111MB/s]  [144MB/274.3MB][ 52%][==========================>                       ][7.579MB/s]  [152MB/274.3MB][ 55%][===========================>                      ][7.6MB/s]  [160MB/274.3MB][ 58%][=============================>                    ][7.619MB/s]  [168MB/274.3MB][ 61%][==============================>                   ][7.636MB/s]  [176MB/274.3MB][ 64%][================================>                 ][7.652MB/s]  [184MB/274.3MB][ 67%][=================================>                ][7.36MB/s]  [192MB/274.3MB][ 69%][==================================>               ][7.385MB/s]  [200MB/274.3MB][ 72%][====================================>             ][7.407MB/s]  [216MB/274.3MB][ 78%][=======================================>          ][7.448MB/s]  [224MB/274.3MB][ 81%][========================================>         ][7.467MB/s]  [232MB/274.3MB][ 84%][==========================================>       ][7.484MB/s]  [240MB/274.3MB][ 87%][===========================================>      ][7.5MB/s]  [256MB/274.3MB][ 93%][==============================================>   ][7.758MB/s]  [264MB/274.3MB][ 96%][================================================> ][7.765MB/s]  [272MB/274.3MB][ 99%][=================================================>][7.771MB/s]  [274.3MB/274.3MB][100%][==================================================][7.621MB/s]  [274.3MB/274.3MB][100%][==================================================][7.621MB/s]  
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ProcessHistory is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ProcessConfiguration is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ParameterSetBlob is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::Hash<1> is available
+TClass::Init:0: RuntimeWarning: no dictionary for class pair<edm::Hash<1>,edm::ParameterSetBlob> is available
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_22321/MeasuredTauLepton_cc.so
+In file included from input_line_11:6:
+In file included from ./MeasuredTauLepton.cc:1:
+In file included from ./MeasuredTauLepton.h:4:
+./svFitAuxFunctions.h:5:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_22321/svFitAuxFunctions_cc.so
+In file included from input_line_11:6:
+In file included from ./svFitAuxFunctions.cc:1:
+./svFitAuxFunctions.h:5:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_22321/FastMTT_cc.so
+In file included from input_line_11:6:
+In file included from ./FastMTT.cc:14:
+./FastMTT.h:23:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+[8MB/51.33MB][ 15%][=======>                                          ][1.333MB/s]  [40MB/51.33MB][ 77%][======================================>           ][5.714MB/s]  [51.33MB/51.33MB][100%][==================================================][7.332MB/s]  [51.33MB/51.33MB][100%][==================================================][7.332MB/s]  
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ProcessHistory is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ProcessConfiguration is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ParameterSetBlob is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::Hash<1> is available
+TClass::Init:0: RuntimeWarning: no dictionary for class pair<edm::Hash<1>,edm::ParameterSetBlob> is available
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_22321/MeasuredTauLepton_cc.so
+In file included from input_line_11:6:
+In file included from ./MeasuredTauLepton.cc:1:
+In file included from ./MeasuredTauLepton.h:4:
+./svFitAuxFunctions.h:5:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_22321/svFitAuxFunctions_cc.so
+In file included from input_line_11:6:
+In file included from ./svFitAuxFunctions.cc:1:
+./svFitAuxFunctions.h:5:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_22321/FastMTT_cc.so
+In file included from input_line_11:6:
+In file included from ./FastMTT.cc:14:
+./FastMTT.h:23:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+rm: cannot remove ‘*.so’: No such file or directory
+rm: cannot remove ‘*.pcm’: No such file or directory
+rm: cannot remove ‘*.so’: No such file or directory
+rm: cannot remove ‘*.pcm’: No such file or directory
+rm: cannot remove ‘*cc.d’: No such file or directory

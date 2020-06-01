@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" ZH.py: makes an nTuple for the ZH->tautau analysis """
+""" HAA.py: makes an nTuple for the H->aa->2l2tau analysis """
 
 __author__ = "Dan Marlow, Alexis Kalogeropoulos, Gage DeZoort" 
 __version__ = "GageDev_v1.1"
@@ -8,11 +8,12 @@ __version__ = "GageDev_v1.1"
 # import external modules 
 import sys
 import numpy as np
-from ROOT import TFile, TTree, TH1, TH1D, TCanvas, TLorentzVector  
+from ROOT import TObject, TFile, TTree, TH1, TH1D, TCanvas, TLorentzVector  
 from math import sqrt, pi
 
 # import from ZH_Run2/funcs/
 sys.path.insert(1,'../funcs/')
+sys.path.insert(1,'../SVFit/')
 import tauFun
 import generalFunctions as GF 
 import outTuple
@@ -30,11 +31,12 @@ def getArgs() :
     parser.add_argument("-n","--nEvents",default=0,type=int,help="Number of events to process.")
     parser.add_argument("-m","--maxPrint",default=0,type=int,help="Maximum number of events to print.")
     parser.add_argument("-t","--testMode",default='',help="tau MVA selection")
-    parser.add_argument("-y","--year",default=2017,type=int,help="Data taking period, 2016, 2017 or 2018")
+    parser.add_argument("-y","--year",default=2016,type=int,help="Data taking period, 2016, 2017 or 2018")
     parser.add_argument("-s","--selection",default='HAA',help="is this for the ZH,AZH, or HAA analysis?")
     parser.add_argument("-u","--unique",default='none',help="CSV file containing list of unique events for sync studies.") 
     parser.add_argument("-w","--weights",default=False,type=int,help="to re-estimate Sum of Weights")
     parser.add_argument("-j","--doSystematics",type=str, default='false',help="do JME systematics")
+    parser.add_argument("-g","--genMatch",default=0,type=int,help="Store 1st order Gen Matching for candidates")
     
     return parser.parse_args()
 
@@ -45,11 +47,9 @@ maxPrint = args.maxPrint
 cutCounter = {}
 cutCounterGenWeight = {}
 
-#cats = ['eeet','eemt','eett','eeem','mmet','mmmt','mmtt','mmem']
-#definitely 2 muons for HAA
-cats = ['mmet','mmmt','mmtt','mmem']
-#cats = ['mmmt']
-#cats = ['mmtt']
+#cats = ['mmet','mmmt','mmtt','mmem']
+cats = ['mmmt']
+#cats = ['tttt'] # quad tau final state later??
 doJME  = args.doSystematics.lower() == 'true' or args.doSystematics.lower() == 'yes' or args.doSystematics == '1'
 
 for cat in cats : 
@@ -158,6 +158,15 @@ if args.unique != 'none' :
 print("Opening {0:s} as output.".format(outFileName))
 outTuple = outTuple.outTuple(outFileName, era)
 
+if args.genMatch:
+    genHistos = {}
+    #bins = np.asarray([-1.5,-0.5,0.5,1.5])
+    bins2 = np.asarray([-3.5,-1.5,-0.5,0.5,1.5,3.5])
+    bins = np.asarray([-3.5,-1.5,-0.5,0.5,1.5,3.5])
+    bins.sort()
+    bins2.sort()
+    for cat in cats:
+        genHistos[cat] = [TH1D(str(cat)+"_1",str(cat)+"_1",len(bins)-1,bins),TH1D(str(cat)+"_2",str(cat)+"_2",len(bins)-1,bins),TH1D(str(cat)+"_3",str(cat)+"_3",len(bins)-1,bins),TH1D(str(cat)+"_4",str(cat)+"_4",len(bins)-1,bins)]
 
 tStart = time.time()
 countMod = 1000
@@ -241,8 +250,35 @@ for count, e in enumerate(inTree) :
                 cutCounter[cat].count('GoodLeptons')
 	        if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
 
+            # we find the mass closest to the Zmass ... 
             #pairList, lepList = tauFun.findZ([],goodMuonList, e)
             pairList, lepList = tauFun.findLeadMuMu(goodMuonList, e)
+
+            if (pairList and lepList and args.genMatch and len(goodMuonList)>2): 
+                genHistos[cat][0].Fill(10.0)
+                genHistos[cat][1].Fill(10.0)
+                #print "event   ",e.event," the dimuon pair selected ", lepList," pt ",pairList[1].Pt()," eta ",pairList[1].Eta()," phi ",pairList[1].Phi()," pt ",pairList[1].Pt()," eta ",pairList[1].Eta()," phi ",pairList[1].Phi()
+                #print " 1 Muon Index ",e.Muon_genPartIdx[lepList[0]]," 1 Muon ID ",e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]]," 1 Muon Mother Index ",e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]," 1 Muon Mother ID ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]]
+                try:
+                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])==36 and (e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]==e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]):
+                        genHistos[cat][0].Fill(2.0)
+                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])==36:
+                        genHistos[cat][0].Fill(1.0)
+                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])!=36:
+                        genHistos[cat][0].Fill(-1.0)
+                except:
+                    genHistos[cat][0].Fill(0.0)
+                try:
+                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])==36 and (e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]==e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]):
+                        genHistos[cat][1].Fill(2.0)
+                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])==36:
+                        genHistos[cat][1].Fill(1.0)
+                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])!=36:
+                        genHistos[cat][1].Fill(-1.0)
+                except:
+                    genHistos[cat][1].Fill(0.0)
+                
+
             if len(lepList) != 2 : continue
             for cat in cats[4:] : 
 	        cutCounter[cat].count('LeptonPair')
@@ -266,7 +302,8 @@ for count, e in enumerate(inTree) :
             for cat in cats[4:]: 
 	        cutCounter[cat].count('FoundZ')
 	        if  MC :   cutCounterGenWeight[cat].countGenWeight('FoundZ', e.genWeight)
-        for tauMode in ['et','mt','tt','em'] :
+        #for tauMode in ['et','mt','tt','em'] :
+        for tauMode in ['mt'] :
             if args.category != 'none' and tauMode != args.category[2:] : continue
             cat = lepMode + tauMode
             if tauMode == 'tt' :
@@ -300,6 +337,41 @@ for count, e in enumerate(inTree) :
 
             if len(bestTauPair) > 1 :
                 jt1, jt2 = bestTauPair[0], bestTauPair[1]
+
+                if args.genMatch and cat=="mmmt":
+                    #default case for plotting ... total in the overflow
+                    genHistos[cat][2].Fill(10.0)
+                    genHistos[cat][3].Fill(10.0)
+                    #print "gen mu id ",e.GenPart_pdgId[e.Muon_genPartIdx[jt1]],"  gen mu mother id ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]
+                    tauIdx = e.Tau_genPartIdx[jt2]
+                    #print jt2,tauIdx
+                    #if (abs(e.GenPart_pdgId[e.Tau_genPartIdx[jt2]]==15) or abs(e.GenPart_pdgId[e.Tau_genPartIdx[jt2]])==17):
+                    #    print "gen tau id ",e.GenPart_pdgId[e.Tau_genPartIdx[jt2]],"  gen tau mother id ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]]
+                    try:
+                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==17)and(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]]==36):
+                            genHistos[cat][2].Fill(3.0)
+                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==17):
+                            genHistos[cat][2].Fill(1.0)
+                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=17):
+                            genHistos[cat][2].Fill(-1.0)
+                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=17)and(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]]==36):
+                            genHistos[cat][2].Fill(-3.0)
+                    except:
+                        genHistos[cat][2].Fill(0.0)
+
+                    #if (abs(e.GenPart_pdgId[e.Tau_genPartFlav[jt2]])==5 ) and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])==36):
+                    #print "index",e.Tau_genPartIdx[jt2]
+                    #if tauIdx>0:
+                    try:
+                        print e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]]
+                        if (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])==36):
+                            genHistos[cat][3].Fill(1.0)
+                        #if (abs(e.GenPart_pdgId[e.Tau_genPartFlav[jt2]])==5 ) and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])!=36):
+                        if (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])!=36):
+                            genHistos[cat][3].Fill(-1.0)
+                    except:
+                        genHistos[cat][3].Fill(0.0)
+
             else :
                 continue
             cutCounter[cat].count("GoodTauPair")
@@ -334,6 +406,13 @@ for count, e in enumerate(inTree) :
                 GF.printEvent(e)
                 print("Event ID={0:s} cat={1:s}".format(GF.eventID(e),cat))
                 
+#if args.genMatch:
+    #print genHistos
+    #for cat in genHistos.keys():
+    #    genHistos[cat][0].Write(genHistos[cat][0].GetName(),TObject.kOverwrite) 
+    #    genHistos[cat][1].Write(genHistos[cat][1].GetName(),TObject.kOverwrite)
+    #    genHistos[cat][2].Write(genHistos[cat][2].GetName(),TObject.kOverwrite)
+    #    genHistos[cat][3].Write(genHistos[cat][3].GetName(),TObject.kOverwrite) 
 
 dT = time.time() - tStart
 print("Run time={0:.2f} s  time/event={1:.1f} us".format(dT,1000000.*dT/count))
@@ -385,4 +464,3 @@ if not MC : CJ.printJSONsummary()
 
 
 outTuple.writeTree()
-

@@ -133,6 +133,37 @@ def mllCut(mll) :
     if mll < mllcuts['mll_low'] or mll > mllcuts['mll_high'] : return False
     return True
 
+def genMatchTau(entry, jt, decayMode=''):
+    """ Classification: genMatching - Gage DeZoort
+           - this function matches a hadronically-decaying tau (decayMode = 'had') to
+             a GenVisPart with  minimum dR(tau,GenVisPart[i])
+           - it matches a leptonically-decaying tau (decayMode = 'lep') to a GenPart with
+             abs(PDGID) = 15 with the smallest dR(tau,GenPart[i])
+    """
+
+    print "Tau(h): (", entry.Tau_pt[jt], ",", entry.Tau_eta[jt], ",", entry.Tau_phi[jt], ")"
+    idx_match, dR_min = -99, 99
+    if decayMode == 'had':
+        #for i in range(entry.nGenVisTau):
+        #    dPhi = min(abs(entry.GenVisTau_phi[i] - entry.Tau_phi[jt]),
+        #               2.0*pi-abs(entry.GenVisTau_phi[i] - entry.Tau_phi[jt]))
+        #    dEta = abs(entry.GenVisTau_eta[i] - entry.Tau_eta[jt])
+        #    dR = sqrt(dPhi**2 + dEta**2)
+        #    if dR < dR_min:
+        #        idx_match, dR_min = i, dR
+
+        for i in range(entry.nGenPart):
+            if abs(entry.GenPart_pdgId[i]) == 15:
+                dPhi = min(abs(entry.GenPart_phi[i] - entry.Tau_phi[jt]),
+                           2.0*pi-abs(entry.GenPart_phi[i] - entry.Tau_phi[jt]))
+                dEta = abs(entry.GenPart_eta[i] - entry.Tau_eta[jt])
+                dR = sqrt(dPhi**2 +dEta**2)
+                if dR < dR_min:
+                    idx_match, dR_min = i, dR
+                #print "Considering tau with (", entry.GenPart_pt[i], ",", entry.GenPart_eta[i], ",", entry.GenPart_phi[i], ")"
+                #print "    --> dR =", dR
+    return idx_match
+
 def getTauPointer(entry, eta1, phi1) :
     # find the j value that most closely matches the specified eta or phi value
     bestMatch, jBest = 999., -1
@@ -340,6 +371,9 @@ def getMuTauPairs(entry,cat='mt',pairList=[],printOn=False) :
 def compareMuTauPair(entry,pair1,pair2) :
     # a return value of True means that pair2 is "better" than pair 1 
     i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+    #printEvents=[365,35,357]
+    #if entry.event in printEvents:
+    #print "event   ",entry.event," mu tau pair pt i1",i1,"  ",entry.Muon_pt[i1]," i2 ",i2,"  ",entry.Muon_pt[i2]," j1 ",j1,"  ",entry.Tau_pt[j1]," j2 ",j2,"  ",entry.Tau_pt[j2],"    scalar sum 1",entry.Muon_pt[i1]+entry.Tau_pt[j1],"   scalar sum 2  ",entry.Muon_pt[i2]+entry.Tau_pt[j2]
     if entry.Muon_pfRelIso04_all[i2]  <  entry.Muon_pfRelIso04_all[i1] : return True
     if entry.Muon_pfRelIso04_all[i2] ==  entry.Muon_pfRelIso04_all[i1] :
         if entry.Muon_pt[i2] >  entry.Muon_pt[i1] : return True
@@ -364,6 +398,9 @@ def getBestMuTauPair(entry,cat='mt',pairList=[],printOn=False) :
             tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
 
     if len(tauPairList) == 0 : return []
+    #printEvents=[365,35,357]
+    #if entry.event in printEvents:
+    #print "best pair ",tauPairList[0][0],tauPairList[0][1]," best scalar sum ",entry.Muon_pt[tauPairList[0][0]]+entry.Tau_pt[tauPairList[0][1]]
     return tauPairList[0]
 
 
@@ -1136,6 +1173,91 @@ def ComparepT(El, Mu, entry) :
     if entry.Electron_pt[El] > entry.Muon_pt[Mu] : return True
     else : return False
 
+#for HAA
+def findmuOrZ(goodMuonList, entry):
+    nMuon = len(goodMuonList)
+    #in the case there are only two muons select the highest pt pair 
+    if nMuon == 2 : 
+        pairList, selpair = findLeadMuMu(goodMuonList,entry)    
+    #in the case that there are more than two muons select the pair closest to the Z-mass - this will ensure we pick bkg events from Drell-Yan and won't effect the signal (almost alll signal events have just the two muons for each a candidate)
+    if nMuon > 1 : 
+        # find mass pairings
+        for i in range(nMuon) :
+            ii = goodMuonList[i]
+            #if entry.Muon_pfRelIso04_all[ii] >  mm['mu_iso']: continue
+            mu1 = TLorentzVector()
+            mu1.SetPtEtaPhiM(entry.Muon_pt[ii],entry.Muon_eta[ii],entry.Muon_phi[ii],0.105)
+
+    return pairList, selpair
+
+
+def findLeadMuMu(goodMuonList, entry) :
+    nMuon = len(goodMuonList)
+    if nMuon > 1 : 
+        # find leading muons 
+        maxpt = 0.0
+        submaxpt = 0.0
+        ptList=[]
+        maxmu=1
+        submaxmu=1
+        tempMuList=[]
+
+        for muNum in range(nMuon) :
+            mu = goodMuonList[muNum] 
+            tempMuList.append(mu)
+            ptList.append(entry.Muon_pt[mu])
+            tempPt=entry.Muon_pt[mu]
+
+            if tempPt>maxpt:
+                maxpt=tempPt
+                maxmu=mu
+                
+
+        maxMuCharge = entry.Muon_charge[maxmu]
+
+        for muNum in range(nMuon) :
+            submu = goodMuonList[muNum] 
+            tempPt=entry.Muon_pt[submu]
+
+            if tempPt>submaxpt and maxMuCharge*entry.Muon_charge[submu]<0  :
+                submaxpt=tempPt
+                submaxmu=submu
+          
+        #pos in goodmuon list 
+        #maxmu = ptList.index(max(ptList)) 
+        #maxpt = max(ptList) 
+        #ptList[maxmu]=0.0
+        #for muNum in range(nMuon) :
+        #submaxmu = ptList.index(max(ptList)) 
+        #ptList[maxmu]=maxpt
+        
+
+        mu1 = TLorentzVector() #leading muon
+        mu2 = TLorentzVector() #subleading muon
+        #print submaxmu,ptList[submaxmu],submaxmu,ptList[submaxmu]
+
+        #print "leading mu ",entry.Muon_charge[maxmu],entry.Muon_pt[maxmu],entry.Muon_eta[maxmu],entry.Muon_phi[maxmu] 
+        #print "sublead mu ",entry.Muon_charge[submaxmu],entry.Muon_pt[submaxmu],entry.Muon_eta[submaxmu],entry.Muon_phi[submaxmu] 
+        #print "full muon list"
+        #for mu in goodMuonList:
+        #    print "mu ",entry.Muon_charge[mu],entry.Muon_pt[mu],entry.Muon_eta[mu],entry.Muon_phi[mu] 
+    
+        mu1.SetPtEtaPhiM(entry.Muon_pt[maxmu],entry.Muon_eta[maxmu],entry.Muon_phi[maxmu],0.105)
+        mu2.SetPtEtaPhiM(entry.Muon_pt[submaxmu],entry.Muon_eta[submaxmu],entry.Muon_phi[submaxmu],0.105)
+        #print "dimuon mass",(mu1 + mu2).M()
+
+        #if entry.Muon_charge[maxmu] > 0. :
+        #    pairList = [mu1,mu2]
+        #    selpair = [maxmu,submaxmu]
+        #else :
+        #    pairList = [mu2,mu1]
+        #    selpair = [submaxmu,maxmu]
+
+        pairList = [mu1,mu2]
+        selpair = [maxmu,submaxmu]
+
+    return pairList, selpair
+
 #MUST OPTIMIZE THIS
 def findZ(goodElectronList, goodMuonList, entry) :
     mm = selections['mm'] # H->tau(mu)+tau(h) selections
@@ -1191,7 +1313,9 @@ def findZ(goodElectronList, goodMuonList, entry) :
                             selpair = [jj,ii]
 
     # first particle of pair is positive
-    #print selpair
+    #  
+    #printEvents=[365,35,357]
+    #if entry.event in printEvents:
     return pairList, selpair
                     
                     

@@ -1,0 +1,36 @@
+WARNING: In non-interactive mode release checks e.g. deprecated releases, production architectures are disabled.
+[8MB/335.9MB][  2%][=>                                                ][1.6MB/s]  [40MB/335.9MB][ 11%][=====>                                            ][6.667MB/s]  [72MB/335.9MB][ 21%][==========>                                       ][10.29MB/s]  [80MB/335.9MB][ 23%][===========>                                      ][10MB/s]  [104MB/335.9MB][ 30%][===============>                                  ][11.56MB/s]  [136MB/335.9MB][ 40%][====================>                             ][13.6MB/s]  [160MB/335.9MB][ 47%][=======================>                          ][14.55MB/s]  [176MB/335.9MB][ 52%][==========================>                       ][14.67MB/s]  [200MB/335.9MB][ 59%][=============================>                    ][15.38MB/s]  [232MB/335.9MB][ 69%][==================================>               ][16.57MB/s]  [248MB/335.9MB][ 73%][====================================>             ][16.53MB/s]  [264MB/335.9MB][ 78%][=======================================>          ][16.5MB/s]  [296MB/335.9MB][ 88%][============================================>     ][17.41MB/s]  [328MB/335.9MB][ 97%][================================================> ][18.22MB/s]  [335.9MB/335.9MB][100%][==================================================][18.66MB/s]  [335.9MB/335.9MB][100%][==================================================][18.66MB/s]  
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ProcessHistory is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ProcessConfiguration is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::ParameterSetBlob is available
+TClass::Init:0: RuntimeWarning: no dictionary for class edm::Hash<1> is available
+TClass::Init:0: RuntimeWarning: no dictionary for class pair<edm::Hash<1>,edm::ParameterSetBlob> is available
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_1036/MeasuredTauLepton_cc.so
+In file included from input_line_11:6:
+In file included from ./MeasuredTauLepton.cc:1:
+In file included from ./MeasuredTauLepton.h:4:
+./svFitAuxFunctions.h:5:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_1036/svFitAuxFunctions_cc.so
+In file included from input_line_11:6:
+In file included from ./svFitAuxFunctions.cc:1:
+./svFitAuxFunctions.h:5:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+Info in <TUnixSystem::ACLiC>: creating shared library /pool/condor/dir_1036/FastMTT_cc.so
+In file included from input_line_11:6:
+In file included from ./FastMTT.cc:14:
+./FastMTT.h:23:10: fatal error: 'Math/LorentzVector.h' file not found
+#include "Math/LorentzVector.h"
+         ^~~~~~~~~~~~~~~~~~~~~~
+Error in <ACLiC>: Dictionary generation failed!
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+rm: cannot remove ‘*.so’: No such file or directory
+rm: cannot remove ‘*.pcm’: No such file or directory
+rm: cannot remove ‘*.so’: No such file or directory
+rm: cannot remove ‘*.pcm’: No such file or directory
+rm: cannot remove ‘*cc.d’: No such file or directory

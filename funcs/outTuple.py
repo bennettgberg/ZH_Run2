@@ -781,7 +781,7 @@ class outTuple() :
 	TrigListLepT, hltListLepT  = GF.findTripleLeptTrigger(goodMuonList, entry, channel_ll, era)
 
 	TrigListLepT = list(dict.fromkeys(TrigListLepT))
-	print TrigListLepT, hltListLepT
+	#print TrigListLepT, hltListLepT
 
 	#print TrigListLepD, hltListLepD, TrigListLep, hltListLep,
 	#if len(TrigListLepD) > 0 : print TrigListLepD, hltListLepD, TrigListLep, hltListLep
@@ -1436,7 +1436,7 @@ class outTuple() :
 		self.jphi_1[ic] = entry.Jet_phi[jj1]
 		self.jcsv_1[ic] = entry.Jet_btagDeepB[jj1]
 		self.jcsvfv_1[ic] = entry.Jet_btagDeepFlavB[jj1]
-                print 'will use', ic, len(jetList), jetList, self.jpt_1[ic], self.njets[ic]
+                #print 'will use', ic, len(jetList), jetList, self.jpt_1[ic], self.njets[ic]
 		
 		# genMatch jet1
 		if isMC:
