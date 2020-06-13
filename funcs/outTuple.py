@@ -62,6 +62,10 @@ class outTuple() :
         self.nGoodElectron    = array('l',[0])
         self.nGoodMuon        = array('l',[0])
 
+        self.L1PreFiringWeight_Nom        = array('f',[0])
+        self.L1PreFiringWeight_Up        = array('f',[0])
+        self.L1PreFiringWeight_Dn        = array('f',[0])
+
         self.d0_1        = array('f',[0])
         self.dZ_1        = array('f',[0])
         self.d0_2        = array('f',[0])
@@ -316,7 +320,7 @@ class outTuple() :
         self.t.Branch('is_trigH',         self.is_trigH,          'is_trigH/I' )
         self.t.Branch('is_trigZ',         self.is_trigZ,          'is_trigZ/I' )
         self.t.Branch('is_trigZH',        self.is_trigZH,         'is_trigZH/I' )
-        self.t.Branch('evt',              self.evt,               'evt/I' )
+        self.t.Branch('evt',              self.evt,               'evt/l' )
         self.t.Branch('nPU',              self.nPU,               'nPU/I' )
         self.t.Branch('nPUEOOT',              self.nPUEOOT,               'nPUEOOT/I' )
         self.t.Branch('nPULOOT',              self.nPULOOT,               'nPULOOT/I' )
@@ -482,6 +486,9 @@ class outTuple() :
         self.t.Branch('iso_2',       self.iso_2,       'iso_2/F')
         self.t.Branch('q_1',       self.q_1,       'q_1/F')
         self.t.Branch('q_2',       self.q_2,       'q_2/F')
+        self.t.Branch('L1PreFiringWeight_Nom',        self.L1PreFiringWeight_Nom,        'L1PreFiringWeight_Nom/F')
+        self.t.Branch('L1PreFiringWeight_Up',        self.L1PreFiringWeight_Up,        'L1PreFiringWeight_Up/F')
+        self.t.Branch('L1PreFiringWeight_Dn',        self.L1PreFiringWeight_Dn,        'L1PreFiringWeight_Dn/F')
         self.t.Branch('d0_1',        self.d0_1,        'd0_1/F')
         self.t.Branch('dZ_1',        self.dZ_1,        'dZ_1/F')
         self.t.Branch('d0_2',        self.d0_2,        'd0_2/F')
@@ -861,7 +868,14 @@ class outTuple() :
         self.q_2[0]  = -99
         self.isGlobal_1[0]  = -99
         self.isGlobal_2[0]  = -99
-
+        try:
+	    self.L1PreFiringWeight_Nom[0] = entry.L1PreFiringWeight_Nom
+	    self.L1PreFiringWeight_Up[0] = entry.L1PreFiringWeight_Up
+	    self.L1PreFiringWeight_Dn[0] = entry.L1PreFiringWeight_Dn
+        except AttributeError : 
+	    self.L1PreFiringWeight_Nom[0] = 1
+	    self.L1PreFiringWeight_Up[0] = 1
+	    self.L1PreFiringWeight_Dn[0] = 1
 
         self.tightId_1[0]       = -1 
         self.mediumId_1[0]       = -1 
@@ -1597,6 +1611,14 @@ class outTuple() :
         self.q_2[0]  = -99
         self.isGlobal_1[0]  = -99
         self.isGlobal_2[0]  = -99
+        try:
+	    self.L1PreFiringWeight_Nom[0] = entry.L1PreFiringWeight_Nom
+	    self.L1PreFiringWeight_Up[0] = entry.L1PreFiringWeight_Up
+	    self.L1PreFiringWeight_Dn[0] = entry.L1PreFiringWeight_Dn
+        except AttributeError : 
+	    self.L1PreFiringWeight_Nom[0] = 1
+	    self.L1PreFiringWeight_Up[0] = 1
+	    self.L1PreFiringWeight_Dn[0] = 1
 
         self.tightId_1[0]       = -1 
         self.mediumId_1[0]       = -1 
