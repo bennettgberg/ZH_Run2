@@ -15,7 +15,8 @@ for file in files :
     cmd = "hadd -f {0:s}.root all*.root".format(file)
     print("cmd={0:s}".format(cmd))
     os.system(cmd) 
-    mv = "mv {0:s}.root /eos/user/s/shigginb/HAA_ntuples/March_2020/.".format(file)
+    #mv = "mv {0:s}.root /eos/user/s/shigginb/HAA_ntuples/March_2020/.".format(file)
+    mv = "mv {0:s}.root /eos/user/s/shigginb/HAA_ntuples/SignalOnly/.".format(file)
     os.system(mv)
     os.chdir('..')
 

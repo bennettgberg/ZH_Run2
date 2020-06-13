@@ -1,14 +1,14 @@
 # !/usr/bin/env python
 
 """ tauFun.py: apply selection sequence to four-lepton final state """
-
+import sys
 import io
 import yaml
 import subprocess
 from ROOT import TLorentzVector
 from math import sqrt, sin, cos, pi
 
-__author__ = "Dan Marlow, Alexis Kalogeropoulos, Gage DeZoort"
+__author__ = "Dan Marlow, Alexis Kalogeropoulos, Gage DeZoort, Sam Higginbotham"
 __date__   = "Monday, Oct. 28th, 2019"
 
 # get selections from configZH.yaml:
@@ -144,16 +144,16 @@ def genMatchTau(entry, jt, decayMode=''):
     print "Tau(h): (", entry.Tau_pt[jt], ",", entry.Tau_eta[jt], ",", entry.Tau_phi[jt], ")"
     idx_match, dR_min = -99, 99
     if decayMode == 'had':
-        #for i in range(entry.nGenVisTau):
-        #    dPhi = min(abs(entry.GenVisTau_phi[i] - entry.Tau_phi[jt]),
-        #               2.0*pi-abs(entry.GenVisTau_phi[i] - entry.Tau_phi[jt]))
-        #    dEta = abs(entry.GenVisTau_eta[i] - entry.Tau_eta[jt])
-        #    dR = sqrt(dPhi**2 + dEta**2)
-        #    if dR < dR_min:
-        #        idx_match, dR_min = i, dR
+        for i in range(entry.nGenVisTau):
+            dPhi = min(abs(entry.GenVisTau_phi[i] - entry.Tau_phi[jt]),
+                       2.0*pi-abs(entry.GenVisTau_phi[i] - entry.Tau_phi[jt]))
+            dEta = abs(entry.GenVisTau_eta[i] - entry.Tau_eta[jt])
+            dR = sqrt(dPhi**2 + dEta**2)
+            if dR < dR_min:
+                idx_match, dR_min = i, dR
 
         for i in range(entry.nGenPart):
-            if abs(entry.GenPart_pdgId[i]) == 15:
+            if (abs(entry.GenPart_pdgId[i]) == 15 or abs(entry.GenPart_pdgId[i]) == 17):
                 dPhi = min(abs(entry.GenPart_phi[i] - entry.Tau_phi[jt]),
                            2.0*pi-abs(entry.GenPart_phi[i] - entry.Tau_phi[jt]))
                 dEta = abs(entry.GenPart_eta[i] - entry.Tau_eta[jt])
@@ -264,6 +264,52 @@ def getBestTauPair(channel, entry, tauList) :
         
     return tauPairList[0]
 
+def comparePairPt(entry,pair1,pair2):
+    # a return value of True means that pair2 is "better" than pair 1 
+    #"better" meaning has higher scalar pt sum
+    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+    if (entry.Tau_pt[i2] + entry.Tau_pt[j2] > entry.Tau_pt[i1] + entry.Tau_pt[j1]):
+        return True 
+    
+    return False
+
+def getBestTauPairPt(channel, entry, tauList) :
+    """ tauFun.getBestTauPair(): return two taus that 
+                                 best represent H->tt
+    """ 
+
+    if not channel in ['mmtt','eett'] : 
+        print("Invalid channel={0:s} in tauFun.getBestTauPair()".format(channel))
+        exit()
+
+    if len(tauList) < 2: return [] 
+    
+    # form all possible pairs that satisfy DR requirement
+    tauPairList = []
+    tt = selections['tt'] # selections for H->(tau_h)(tau_h)
+    for i in range(len(tauList)) :
+        idx_tau1 = tauList[i]
+        for j in range(len(tauList)) :
+            if i == j: continue
+            idx_tau2 = tauList[j]
+            if tauDR(entry, idx_tau1, idx_tau2) < tt['tt_DR'] : continue
+            tauPairList.append([idx_tau1, idx_tau2])
+
+    # Sort the pair list using a bubble sort
+    # The list is not fully sorted, since only the top pairing is needed
+    for i in range(len(tauPairList)-1,0,-1) :
+        if comparePairPt(entry, tauPairList[i],tauPairList[i-1]) : 
+            tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
+
+    if len(tauPairList) == 0 : return []
+    #placing the lead first
+    idx_tau1, idx_tau2 = tauPairList[0][0], tauPairList[0][1]
+    if entry.Tau_pt[idx_tau2] > entry.Tau_pt[idx_tau1] : 
+        temp = tauPairList[0][0]
+        tauPairList[0][0] = tauPairList[0][1]
+        tauPairList[0][1] = temp
+        
+    return tauPairList[0]
 
 def getMuTauPairs(entry,cat='mt',pairList=[],printOn=False) :
     """  tauFun.getMuTauPairs.py: return list of acceptable pairs
@@ -384,6 +430,32 @@ def compareMuTauPair(entry,pair1,pair2) :
 
     return False
 
+def compareTauPairsHighPt(entry,pair1,pair2):
+    # a return value of True means that pair2 is "better" than pair 1 
+    #"better" meaning has higher scalar pt sum
+    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+    #print "event   ",entry.event," mu tau pair pt i1",i1,"  ",entry.Muon_pt[i1]," i2 ",i2,"  ",entry.Muon_pt[i2]," j1 ",j1,"  ",entry.Tau_pt[j1]," j2 ",j2,"  ",entry.Tau_pt[j2],"    scalar sum 1",entry.Muon_pt[i1]+entry.Tau_pt[j1],"   scalar sum 2  ",entry.Muon_pt[i2]+entry.Tau_pt[j2]
+    if (entry.Muon_pt[i2] + entry.Tau_pt[j2] > entry.Muon_pt[i1] + entry.Tau_pt[j1]):
+        return True 
+    
+    return False
+
+#addition for HAA ... finding the di-tau pair with the highest scalar pt-sum
+def getBestMuTauPairPt(entry,cat='mt',pairList=[],printOn=False) :
+
+    # form all possible pairs that satisfy DR requirement
+    if printOn : print("Entering getBestMuTauPair()") 
+    tauPairList = getMuTauPairs(entry,cat=cat,pairList=pairList,printOn=printOn) 
+
+    # Sort the pair list using a bubble sort
+    # The list is not fully sorted, since only the top pairing is needed
+    for i in range(len(tauPairList)-1,0,-1) :
+        if compareTauPairsHighPt(entry,tauPairList[i],tauPairList[i-1]):
+            tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
+
+    if len(tauPairList) == 0 : return []
+    #print "best pair "," evt ",entry.event,tauPairList[0][0],tauPairList[0][1]," best scalar sum ",entry.Muon_pt[tauPairList[0][0]]+entry.Tau_pt[tauPairList[0][1]]
+    return tauPairList[0]
 
 def getBestMuTauPair(entry,cat='mt',pairList=[],printOn=False) :
 
@@ -398,9 +470,6 @@ def getBestMuTauPair(entry,cat='mt',pairList=[],printOn=False) :
             tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
 
     if len(tauPairList) == 0 : return []
-    #printEvents=[365,35,357]
-    #if entry.event in printEvents:
-    #print "best pair ",tauPairList[0][0],tauPairList[0][1]," best scalar sum ",entry.Muon_pt[tauPairList[0][0]]+entry.Tau_pt[tauPairList[0][1]]
     return tauPairList[0]
 
 
@@ -536,6 +605,28 @@ def getBestEMuTauPair(entry,cat,pairList=[],printOn=False) :
     if len(tauPairList) == 0 : return []
     return tauPairList[0]
 
+def compareEMuTauPairPt(entry,pair1,pair2) :
+    # a return value of True means that pair2 is "better" than pair 1 
+    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+    if (entry.Electron_pt[i2] + entry.Muon_pt[j2] > entry.Electron_pt[i1] + entry.Muon_pt[j1]):
+        return True 
+    
+    return False
+
+def getBestEMuTauPairPt(entry,cat,pairList=[],printOn=False) :
+
+    if printOn : print("Entering getBestEMuTauPair")
+    # form all possible pairs that satisfy DR requirement
+    tauPairList = getEMuTauPairs(entry,cat=cat,pairList=pairList,printOn=printOn) 
+
+    # Sort the pair list using a bubble sort
+    # The list is not fully sorted, since only the top pairing is needed
+    for i in range(len(tauPairList)-1,0,-1) :
+        if compareEMuTauPair(entry, tauPairList[i],tauPairList[i-1]) : 
+            tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
+
+    if len(tauPairList) == 0 : return []
+    return tauPairList[0]
 
 def getETauPairs(entry,cat='et',pairList=[],printOn=False) :
     """ tauFun.getETauPairs(): get suitable pairs of 
@@ -679,6 +770,28 @@ def getBestETauPair(entry,cat,pairList=[],printOn=False) :
     if len(tauPairList) == 0 : return []
     return tauPairList[0]
 
+def compareETauPairPt(entry,pair1,pair2) :
+    # a return value of True means that pair2 is "better" than pair 1 
+    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+    if (entry.Electron_pt[i2] + entry.Tau_pt[j2] > entry.Electron_pt[i1] + entry.Tau_pt[j1]):
+        return True 
+    
+    return False
+
+def getBestETauPairPt(entry,cat,pairList=[],printOn=False) :
+
+    if printOn : print("Entering getBestETauPair")
+    # form all possible pairs that satisfy DR requirement
+    tauPairList = getETauPairs(entry,cat=cat,pairList=pairList,printOn=printOn) 
+
+    # Sort the pair list using a bubble sort
+    # The list is not fully sorted, since only the top pairing is needed
+    for i in range(len(tauPairList)-1,0,-1) :
+        if compareETauPairPt(entry, tauPairList[i],tauPairList[i-1]) : 
+            tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
+
+    if len(tauPairList) == 0 : return []
+    return tauPairList[0]
 
 def getEEPairs(entry, cat='ee', pairList=[], printOn=False):
     
@@ -998,6 +1111,21 @@ def makeGoodElectronListExtraLepton(entry, listEl) :
         if i not in listEl and goodElectronExtraLepton(entry, i) : goodExtraElectronList.append(i)
     return goodExtraElectronList
 
+def findMuonNegCharge(entry,goodMuonList):
+    negativeMuList=[]
+    for mu in goodMuonList:
+        if entry.Muon_charge[mu]<0:
+            negativeMuList.append(mu)
+         
+    return negativeMuList
+
+def findMuonPosCharge(entry,goodMuonList):
+    postiveMuList=[]
+    for mu in goodMuonList:
+        if entry.Muon_charge[mu]>0:
+            postiveMuList.append(mu)
+    return postiveMuList
+
 def eliminateCloseTauAndLepton(entry, goodElectronList, goodMuonList, goodTauList) :
 
     badMuon, badElectron, badTau = [], [], []
@@ -1236,8 +1364,8 @@ def findLeadMuMu(goodMuonList, entry) :
         mu2 = TLorentzVector() #subleading muon
         #print submaxmu,ptList[submaxmu],submaxmu,ptList[submaxmu]
 
-        #print "leading mu ",entry.Muon_charge[maxmu],entry.Muon_pt[maxmu],entry.Muon_eta[maxmu],entry.Muon_phi[maxmu] 
-        #print "sublead mu ",entry.Muon_charge[submaxmu],entry.Muon_pt[submaxmu],entry.Muon_eta[submaxmu],entry.Muon_phi[submaxmu] 
+        #print "leading mu ",entry.event,entry.Muon_charge[maxmu],entry.Muon_pt[maxmu],entry.Muon_eta[maxmu],entry.Muon_phi[maxmu] 
+        #print "sublead mu ",entry.event,entry.Muon_charge[submaxmu],entry.Muon_pt[submaxmu],entry.Muon_eta[submaxmu],entry.Muon_phi[submaxmu] 
         #print "full muon list"
         #for mu in goodMuonList:
         #    print "mu ",entry.Muon_charge[mu],entry.Muon_pt[mu],entry.Muon_eta[mu],entry.Muon_phi[mu] 
@@ -1258,7 +1386,6 @@ def findLeadMuMu(goodMuonList, entry) :
 
     return pairList, selpair
 
-#MUST OPTIMIZE THIS
 def findZ(goodElectronList, goodMuonList, entry) :
     mm = selections['mm'] # H->tau(mu)+tau(h) selections
     selpair,pairList, mZ, bestDiff = [],[], 91.19, 99999. 
@@ -1385,11 +1512,22 @@ def numberToCat3L(number) :
     return cat[number]
 
 
+def findAMother(entry,motherType,daughter):
+    try:
+        MotherIdx = entry.GenPart_genPartIdxMother[daughter]
+    except:
+        print "Catch error at findAMother ",sys.exc_info()[0]
+        return -1
+    #print "daughter index",daughter
+    #print "mother index",MotherIdx
+    if MotherIdx==-1:
+        return -1
+    if abs(entry.GenPart_pdgId[MotherIdx])==motherType:
+        print "found the right mother",MotherIdx
+        return  MotherIdx
+    else:
+        return findAMother(entry,motherType,MotherIdx) #case where we need the grandma... muons that radiate gammas are two generations...
+        #return None 
+       
+        
 
-
-
-    
-    
-    
-
-    

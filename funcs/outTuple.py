@@ -49,6 +49,7 @@ class outTuple() :
         self.nPV              = array('l',[0])
         self.nPVGood              = array('l',[0])
         self.cat              = array('l',[0])
+        self.algo              = array('l',[0])
         self.weight           = array('f',[0])
         self.weightPU           = array('f',[0])
         self.weightPUtrue           = array('f',[0])
@@ -323,6 +324,7 @@ class outTuple() :
         self.t.Branch('nPV',              self.nPV,               'nPV/I' )
         self.t.Branch('nPVGood',              self.nPVGood,               'nPVGood/I' )
         self.t.Branch('cat',              self.cat,               'cat/I' )
+        self.t.Branch('algo',              self.algo,               'algo/I' )
         self.t.Branch('weight',           self.weight,            'weight/F' )
         self.t.Branch('weightPU',           self.weightPU,            'weightPU/F' )
         self.t.Branch('weightPUtrue',           self.weightPUtrue,            'weightPUtrue/F' )
@@ -754,7 +756,7 @@ class outTuple() :
         ttP4 = FMTT.getBestP4()
         return ttP4.M(), ttP4.Mt() 
     
-    def Fill(self, entry, SVFit, cat, jt1, jt2, LepP, LepM, lepList, isMC, era, goodMuonList, doUncertainties=False , sysVariations=[]) :
+    def Fill(self, entry, SVFit, cat, jt1, jt2, LepP, LepM, lepList, isMC, era, goodMuonList, algo=0, doUncertainties=False , sysVariations=[]) :
         ''' - jt1 and jt2 point to the selected tau candidates according to the table below.
             - if e.g., channel = 'et', the jt1 points to the electron list and jt2 points to the tau list.
             - LepP and LepM are TLorentz vectors for the positive and negative members of the dilepton pair
@@ -846,6 +848,7 @@ class outTuple() :
         
         self.entries += 1
 
+        self.algo[0]  = algo
         self.run[0]  = entry.run
         self.nElectron[0]  = entry.nElectron
         self.nMuon[0]  = entry.nMuon
@@ -1839,6 +1842,7 @@ class outTuple() :
         self.nGoodElectron[0] =  nelectrons
         self.nGoodMuon[0]     = nmuons
         self.cat[0]  = tauFun.catToNumber3L(cat)
+        self.algo[0]  = algo
         
 
         try :

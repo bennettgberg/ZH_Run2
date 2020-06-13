@@ -10,6 +10,7 @@ def getArgs() :
     parser.add_argument("--nickName",default='MCpileup',help="Data set nick name.") 
     parser.add_argument("-m","--mode",default='anaXRD',help="Mode (script to run).")
     parser.add_argument("-y","--year",default=2017,type=str,help="Data taking period, 2016, 2017 or 2018")
+    parser.add_argument("--csv",default="MCsamples_2016.csv",help="CSV file for samples")
     parser.add_argument("-c","--concatenate",default=5,type=int,help="On how many files to run on each job")
     parser.add_argument("-s","--selection",default='HAA',type=str,help="select ZH,AZH,HAA")
     parser.add_argument("-g","--genmatch",default=0,type=int,help="genmatch")
@@ -102,7 +103,7 @@ for nFile in range(0, len(dataset),mjobs) :
         fileloop=dataset[nFile:nFile+maxx][j]
         outLines.append("xrdcp root://cms-xrd-global.cern.ch/{0:s} inFile.root\n".format(fileloop)) 
         outFileName = "{0:s}_{1:03d}.root".format(args.nickName,nFile+j)
-        outLines.append("python HAA.py -f inFile.root -o {0:s} --nickName {1:s} -y {2:s} -s {3:s} -w 1 -g {4:d}\n".format(outFileName,args.nickName, args.year, args.selection, args.genmatch))
+        outLines.append("python HAA.py -f inFile.root -o {0:s} --nickName {1:s} --csv {2:s} -y {3:s} -s {4:s} -w 1 -g {5:d}\n".format(outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch))
         outLines.append("rm inFile.root\n")
 
 
@@ -147,7 +148,7 @@ for file in scriptList :
     print("dir={0:s}".format(dir))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}ScaleFactor.py, {0:s}SFs.tar.gz, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
-    outLines.append('transfer_input_files = {0:s}HAA.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
+    outLines.append('transfer_input_files = {0:s}HAA.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, {0:s}{3:s},'.format(dir,args.year, args.selection, args.csv))
     #outLines.append('{0:s}*txt, '.format(dirData))
     outLines.append('{0:s}tauFun.py, {0:s}generalFunctions.py, {0:s}outTuple.py,'.format(funcsDir))
     outLines.append('{0:s}FastMTT.h, {0:s}MeasuredTauLepton.h, {0:s}svFitAuxFunctions.h,'.format(SVFitDir)) 

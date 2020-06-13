@@ -740,7 +740,7 @@ class pileUpWeight() :
     def __init__(self):
         self.dummy = 0
         
-    def calculateWeights(self,nickName,year) :
+    def calculateWeights(self,nickName,year,csv) :
         # get data pileup histogram
         fData = TFile('data_pileup_{0:d}.root'.format(year))
         hData = fData.Get('pileup')
@@ -753,8 +753,8 @@ class pileUpWeight() :
         lumi = { 2016:35.9, 2017:41.5, 2018:59.7 }
         xSec = 1.
         # get MC cross section values
-        #for line in open('MCsamples.csv','r').readlines() :
-        for line in open('MCsamples_{0:d}.csv'.format(year),'r').readlines() :
+        #for line in open('MCsamples_{0:d}.csv'.format(year),'r').readlines() :
+        for line in open(csv,'r').readlines() :
             if nickName == line.split(',')[0].strip() :
                 xSec = 1000.*float(line.split(',')[2])
                  

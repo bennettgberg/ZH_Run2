@@ -30,8 +30,10 @@ def getArgs() :
     parser.add_argument("-o","--outFileName",default='',help="File to be used for output.")
     parser.add_argument("-n","--nEvents",default=0,type=int,help="Number of events to process.")
     parser.add_argument("-m","--maxPrint",default=0,type=int,help="Maximum number of events to print.")
+    parser.add_argument("--maxprint2",default=0,type=int,help="Maximum number of events to print.")
     parser.add_argument("-t","--testMode",default='',help="tau MVA selection")
     parser.add_argument("-y","--year",default=2016,type=int,help="Data taking period, 2016, 2017 or 2018")
+    parser.add_argument("--csv",default="MCsamples_2016.csv",help="CSV file for samples")
     parser.add_argument("-s","--selection",default='HAA',help="is this for the ZH,AZH, or HAA analysis?")
     parser.add_argument("-u","--unique",default='none',help="CSV file containing list of unique events for sync studies.") 
     parser.add_argument("-w","--weights",default=False,type=int,help="to re-estimate Sum of Weights")
@@ -47,8 +49,8 @@ maxPrint = args.maxPrint
 cutCounter = {}
 cutCounterGenWeight = {}
 
-#cats = ['mmet','mmmt','mmtt','mmem']
-cats = ['mmmt']
+cats = ['mmet','mmmt','mmtt','mmem']
+#cats = ['mmmt']
 #cats = ['tttt'] # quad tau final state later??
 doJME  = args.doSystematics.lower() == 'true' or args.doSystematics.lower() == 'yes' or args.doSystematics == '1'
 
@@ -79,7 +81,7 @@ if args.dataType == 'MC' or args.dataType == 'mc' : MC = True
 if MC :
     print "this is MC, will get PU etc", args.dataType
     PU = GF.pileUpWeight()
-    PU.calculateWeights(args.nickName,args.year)
+    PU.calculateWeights(args.nickName,args.year,args.csv)
 else :
     CJ = ''#GF.checkJSON(filein='Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt')
     if args.year == 2016 : CJ = GF.checkJSON(filein='Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt')
@@ -165,13 +167,22 @@ if args.genMatch:
     bins = np.asarray([-3.5,-1.5,-0.5,0.5,1.5,3.5])
     bins.sort()
     bins2.sort()
+    algo=0
     for cat in cats:
-        genHistos[cat] = [TH1D(str(cat)+"_1",str(cat)+"_1",len(bins)-1,bins),TH1D(str(cat)+"_2",str(cat)+"_2",len(bins)-1,bins),TH1D(str(cat)+"_3",str(cat)+"_3",len(bins)-1,bins),TH1D(str(cat)+"_4",str(cat)+"_4",len(bins)-1,bins)]
+        #for algo in range(0,2):
+            genHistos[cat+":"+str(algo)] = [TH1D(str(cat)+"_"+str(algo)+"_1",str(cat)+"_"+str(algo)+"_1",len(bins)-1,bins),TH1D(str(cat)+"_"+str(algo)+"_2",str(cat)+"_"+str(algo)+"_2",len(bins)-1,bins),TH1D(str(cat)+"_"+str(algo)+"_3",str(cat)+"_"+str(algo)+"_3",len(bins)-1,bins),TH1D(str(cat)+"_"+str(algo)+"_4",str(cat)+"_"+str(algo)+"_4",len(bins)-1,bins)]
 
 tStart = time.time()
 countMod = 1000
 isMC = True
+
+
+#The event loop
 for count, e in enumerate(inTree) :
+
+    if args.maxprint2:
+        GF.printMC(e)
+        GF.printEvent(e)
     if count % countMod == 0 :
         print("Count={0:d}".format(count))
         if count >= 10000 : countMod = 10000
@@ -205,214 +216,169 @@ for count, e in enumerate(inTree) :
             continue
     if not tauFun.goodTrigger(e, args.year) : continue
     
-    for cat in cats: 
-	cutCounter[cat].count('Trigger')
-	if  MC :   cutCounterGenWeight[cat].countGenWeight('Trigger', e.genWeight)
-            
-    #for lepMode in ['ee','mm'] :
-    for lepMode in ['mm'] :
-        if args.category != 'none' and not lepMode in args.category : continue
+    for cat in cats:
+        cutCounter[cat].count('Trigger')
+    if  MC :   cutCounterGenWeight[cat].countGenWeight('Trigger', e.genWeight)
 
-        if lepMode == 'ee' :
-            if e.nElectron < 2 : continue
-            for cat in cats[:4] : 
-	        cutCounter[cat].count('LeptonCount')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonCount', e.genWeight)
-        if lepMode == 'mm' :
-            if e.nMuon < 2 : continue 
-            for cat in cats[4:] : 
-	        cutCounter[cat].count('LeptonCount')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonCount', e.genWeight)
+    if e.nMuon < 2 : continue 
+    for cat in cats[4:] : 
+        cutCounter[cat].count('LeptonCount')
+    if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonCount', e.genWeight)
 
 
-        goodElectronList = tauFun.makeGoodElectronList(e)
-        goodMuonList = tauFun.makeGoodMuonList(e)
-        goodElectronList, goodMuonList = tauFun.eliminateCloseLeptons(e, goodElectronList, goodMuonList)
-
-	lepList=[]
-
+    goodElectronList = tauFun.makeGoodElectronList(e)
+    goodMuonList = tauFun.makeGoodMuonList(e)
+    goodElectronList, goodMuonList = tauFun.eliminateCloseLeptons(e, goodElectronList, goodMuonList)
+    lepList=[] 
+    
+    if len(goodMuonList) < 2 : continue
+    for cat in cats[4:] :
+        cutCounter[cat].count('GoodLeptons')
+    if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
         
-        if lepMode == 'ee' :
-            if len(goodElectronList) < 2 : continue
-            for cat in cats[:4] :
-                cutCounter[cat].count('GoodLeptons')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
+    #Muon selection algorithm 
+    pairList, lepList = tauFun.findLeadMuMu(goodMuonList, e)
 
-            pairList, lepList = tauFun.findZ(goodElectronList,[], e)
-            if len(lepList) != 2 : continue
-            for cat in cats[:4] : 
-	        cutCounter[cat].count('LeptonPair')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonPair', e.genWeight)
+    if len(lepList) != 2 : continue
+    for cat in cats[4:] : 
+        cutCounter[cat].count('LeptonPair')
+    if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonPair', e.genWeight)
+
+    LepP, LepM = pairList[0], pairList[1]
+    M = (LepM + LepP).M()
+
+    if not tauFun.mllCut(M) :
+        if unique :
+            print("Zmass Fail: : Event ID={0:d} cat={1:s} M={2:.2f}".format(e.event,cat,M))
+            #GF.printEvent(e)
+            #if MC : GF.printMC(e)
+        continue ##cut valid for both AZH and ZH
+
+    for cat in cats[4:]: 
+        cutCounter[cat].count('FoundZ')
+    if  MC :   cutCounterGenWeight[cat].countGenWeight('FoundZ', e.genWeight)
+
+    #now to loop over the categories - all of them have a dimuon pair
+    for cat in cats:
+        if cat[2:] == 'tt' :
+            tauList = tauFun.getTauList(cat, e, pairList=pairList)
+            bestTauPair = tauFun.getBestTauPairPt(cat, e, tauList )
+                                
+        elif cat[2:] == 'et' :
+            bestTauPair = tauFun.getBestETauPairPt(e,cat=cat,pairList=pairList)
+        elif cat[2:] == 'mt' :
+            bestTauPair = tauFun.getBestMuTauPairPt(e,cat=cat,pairList=pairList)
+        elif cat[2:] == 'em' :
+            bestTauPair = tauFun.getBestEMuTauPairPt(e,cat=cat,pairList=pairList)
+        else : continue
         
-        if lepMode == 'mm' :
-            if len(goodMuonList) < 2 : continue
-            for cat in cats[4:] :
-                cutCounter[cat].count('GoodLeptons')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
+        if len(bestTauPair) > 1 :
+            jt1, jt2 = bestTauPair[0], bestTauPair[1]
+            #print "evt ",e.event," best pair pt sum",e.Muon_pt[bestTauPair[0]] + e.Tau_pt[bestTauPair[1]]
 
-            # we find the mass closest to the Zmass ... 
-            #pairList, lepList = tauFun.findZ([],goodMuonList, e)
-            pairList, lepList = tauFun.findLeadMuMu(goodMuonList, e)
+            #not done yet! figure efficiency in taus!!
+            if bestTauPair and args.genMatch:
+                genHistos[cat+":"+str(algo)][2].Fill(10.0)
+                genHistos[cat+":"+str(algo)][3].Fill(10.0)
+                #print "gen mu id ",e.GenPart_pdgId[e.Muon_genPartIdx[jt1]],"  gen mu mother id ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]
+                tauIdx1 = e.Muon_genPartIdx[jt1]
+                #print "tau id 1",tauIdx1
+                tauIdx2 = e.Tau_genPartIdx[jt2]
+                #print "tau id 2",tauIdx2
+                motherIndex1 = 0.0
+                motherIndex2 = 0.0
+                motherIndex1  = tauFun.findAMother(e,36,tauIdx1)
+                #print "final mother index of leg 1",motherIndex1
+                motherIndex2  = tauFun.findAMother(e,36,tauIdx2)
+                #print "final mother index of leg 2",motherIndex2
+                #print jt2,tauIdx
+                #print "gen tau id ",e.GenPart_pdgId[e.Tau_genPartIdx[jt2]],"  gen tau mother id ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]]
+                if tauIdx1>0 and abs(e.GenPart_pdgId[tauIdx1])==13 and (motherIndex1==motherIndex2):
+                    genHistos[cat+":"+str(algo)][2].Fill(2.0)
+                elif tauIdx1>0 and abs(e.GenPart_pdgId[tauIdx1])==13 and motherIndex1>0:
+                    genHistos[cat+":"+str(algo)][2].Fill(1.0)
+                elif tauIdx1>0 and abs(e.GenPart_pdgId[tauIdx1])==13 and motherIndex1==-1:
+                    genHistos[cat+":"+str(algo)][2].Fill(-1.0)
+                else:
+                    genHistos[cat+":"+str(algo)][2].Fill(0.0)
+                if tauIdx2>0 and (abs(e.GenPart_pdgId[tauIdx2])==15 or abs(e.GenPart_pdgId[tauIdx2])==17) and (motherIndex1==motherIndex2):
+                    genHistos[cat+":"+str(algo)][3].Fill(2.0)
+                elif tauIdx2>0 and (abs(e.GenPart_pdgId[tauIdx2])==15 or abs(e.GenPart_pdgId[tauIdx2])==17) and motherIndex2>0:
+                    genHistos[cat+":"+str(algo)][3].Fill(1.0)
+                elif tauIdx2>0 and (abs(e.GenPart_pdgId[tauIdx2])==15 or abs(e.GenPart_pdgId[tauIdx2])==17) and motherIndex2==-1:
+                    genHistos[cat+":"+str(algo)][3].Fill(-1.0)
+                else:
+                    genHistos[cat+":"+str(algo)][3].Fill(0.0)
 
-            if (pairList and lepList and args.genMatch and len(goodMuonList)>2): 
-                genHistos[cat][0].Fill(10.0)
-                genHistos[cat][1].Fill(10.0)
-                #print "event   ",e.event," the dimuon pair selected ", lepList," pt ",pairList[1].Pt()," eta ",pairList[1].Eta()," phi ",pairList[1].Phi()," pt ",pairList[1].Pt()," eta ",pairList[1].Eta()," phi ",pairList[1].Phi()
-                #print " 1 Muon Index ",e.Muon_genPartIdx[lepList[0]]," 1 Muon ID ",e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]]," 1 Muon Mother Index ",e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]," 1 Muon Mother ID ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]]
-                try:
-                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])==36 and (e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]==e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]):
-                        genHistos[cat][0].Fill(2.0)
-                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])==36:
-                        genHistos[cat][0].Fill(1.0)
-                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])!=36:
-                        genHistos[cat][0].Fill(-1.0)
-                except:
-                    genHistos[cat][0].Fill(0.0)
-                try:
-                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])==36 and (e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]==e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]):
-                        genHistos[cat][1].Fill(2.0)
-                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])==36:
-                        genHistos[cat][1].Fill(1.0)
-                    if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])!=36:
-                        genHistos[cat][1].Fill(-1.0)
-                except:
-                    genHistos[cat][1].Fill(0.0)
-                
 
-            if len(lepList) != 2 : continue
-            for cat in cats[4:] : 
-	        cutCounter[cat].count('LeptonPair')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonPair', e.genWeight)
+        else :
+            continue
+        cutCounter[cat].count("GoodTauPair")
 
-        LepP, LepM = pairList[0], pairList[1]
-        M = (LepM + LepP).M()
-	
-        if not tauFun.mllCut(M) :
-            if unique :
-                print("Zmass Fail: : Event ID={0:d} cat={1:s} M={2:.2f}".format(e.event,cat,M))
-                #GF.printEvent(e)
-                #if MC : GF.printMC(e)
-            continue ##cut valid for both AZH and ZH
+        if  MC:   cutCounterGenWeight[cat].countGenWeight('GoodTauPair', e.genWeight)
 
-        if lepMode == 'ee' :
-            for cat in cats[:4]: 
-	        cutCounter[cat].count('FoundZ')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('FoundZ', e.genWeight)
-        if lepMode == 'mm' :
-            for cat in cats[4:]: 
-	        cutCounter[cat].count('FoundZ')
-	        if  MC :   cutCounterGenWeight[cat].countGenWeight('FoundZ', e.genWeight)
-        #for tauMode in ['et','mt','tt','em'] :
-        for tauMode in ['mt'] :
-            if args.category != 'none' and tauMode != args.category[2:] : continue
-            cat = lepMode + tauMode
-            if tauMode == 'tt' :
-                tauList = tauFun.getTauList(cat, e, pairList=pairList)
-                bestTauPair = tauFun.getBestTauPair(cat, e, tauList )
-                                    
-            elif tauMode == 'et' :
-                bestTauPair = tauFun.getBestETauPair(e,cat=cat,pairList=pairList)
-            elif tauMode == 'mt' :
-                bestTauPair = tauFun.getBestMuTauPair(e,cat=cat,pairList=pairList)
-            elif tauMode == 'em' :
-                bestTauPair = tauFun.getBestEMuTauPair(e,cat=cat,pairList=pairList)
-	    else : continue
-            
-            if len(bestTauPair) < 1 :
-                if unique :
-                    print("Tau Pair Fail: Event ID={0:d} cat={1:s}".format(e.event,cat))
-                    bestTauPair = tauFun.getBestEMuTauPair(e,cat=cat,pairList=pairList,printOn=True) 
-                    GF.printEvent(e)
-                                    
-                if False and maxPrint > 0 and (tauMode == GF.eventID(e)[2:4]) :
-                    maxPrint -= 1
-                    print("Failed tau-pair cut")
-                    print("Event={0:d} cat={1:s}".format(e.event,cat))
-                    print("goodMuonList={0:s} goodElectronList={1:s} Mll={3:.1f} bestTauPair={4:s}".format(
-                        str(goodMuonList),str(goodElectronList),str(pairList),M,str(bestTauPair)))
-                    print("Lep1.pt() = {0:.1f} Lep2.pt={1:.1f}".format(pairList[0].Pt(),pairList[1].Pt()))
-                    GF.printEvent(e)
-                    GF.printMC(e)
-                continue
-
-            if len(bestTauPair) > 1 :
-                jt1, jt2 = bestTauPair[0], bestTauPair[1]
-
-                if args.genMatch and cat=="mmmt":
-                    #default case for plotting ... total in the overflow
-                    genHistos[cat][2].Fill(10.0)
-                    genHistos[cat][3].Fill(10.0)
-                    #print "gen mu id ",e.GenPart_pdgId[e.Muon_genPartIdx[jt1]],"  gen mu mother id ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]
-                    tauIdx = e.Tau_genPartIdx[jt2]
-                    #print jt2,tauIdx
-                    #if (abs(e.GenPart_pdgId[e.Tau_genPartIdx[jt2]]==15) or abs(e.GenPart_pdgId[e.Tau_genPartIdx[jt2]])==17):
-                    #    print "gen tau id ",e.GenPart_pdgId[e.Tau_genPartIdx[jt2]],"  gen tau mother id ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]]
-                    try:
-                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==17)and(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]]==36):
-                            genHistos[cat][2].Fill(3.0)
-                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])==17):
-                            genHistos[cat][2].Fill(1.0)
-                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=17):
-                            genHistos[cat][2].Fill(-1.0)
-                        if abs(e.GenPart_pdgId[e.Muon_genPartIdx[jt1]])==13 and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=15 or abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]])!=17)and(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[jt1]]]]==36):
-                            genHistos[cat][2].Fill(-3.0)
-                    except:
-                        genHistos[cat][2].Fill(0.0)
-
-                    #if (abs(e.GenPart_pdgId[e.Tau_genPartFlav[jt2]])==5 ) and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])==36):
-                    #print "index",e.Tau_genPartIdx[jt2]
-                    #if tauIdx>0:
-                    try:
-                        print e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]]
-                        if (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])==36):
-                            genHistos[cat][3].Fill(1.0)
-                        #if (abs(e.GenPart_pdgId[e.Tau_genPartFlav[jt2]])==5 ) and (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])!=36):
-                        if (abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Tau_genPartIdx[jt2]]])!=36):
-                            genHistos[cat][3].Fill(-1.0)
-                    except:
-                        genHistos[cat][3].Fill(0.0)
-
-            else :
-                continue
-            cutCounter[cat].count("GoodTauPair")
-	    if  MC:   cutCounterGenWeight[cat].countGenWeight('GoodTauPair', e.genWeight)
-
-            if MC :
-                outTuple.setWeight(PU.getWeight(e.PV_npvs)) 
-                outTuple.setWeightPU(PU.getWeight(e.Pileup_nPU)) 
-                outTuple.setWeightPUtrue(PU.getWeight(e.Pileup_nTrueInt)) 
-		#print 'nPU', e.Pileup_nPU, e.Pileup_nTrueInt, PU.getWeight(e.Pileup_nPU), PU.getWeight(e.Pileup_nTrueInt), PU.getWeight(e.PV_npvs), PU.getWeight(e.PV_npvsGood)
-	    else : 
+        if MC :
+            outTuple.setWeight(PU.getWeight(e.PV_npvs)) 
+            outTuple.setWeightPU(PU.getWeight(e.Pileup_nPU)) 
+            outTuple.setWeightPUtrue(PU.getWeight(e.Pileup_nTrueInt)) 
+        else : 
                 outTuple.setWeight(1.) 
                 outTuple.setWeightPU(1.) ##
                 outTuple.setWeightPUtrue(1.)
 
 
-            #cutCounter[cat].count("VVtightTauPair")
-	    #if MC :   cutCounterGenWeight[cat].countGenWeight('VVtightTauPair', e.genWeight)
-                        
-            #SVFit = True
-            SVFit = False
-	    
-            if not MC : isMC = False
-            outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era, goodMuonList, doJME, varSystematics) 
+        SVFit = False
+    
+        if not MC : isMC = False
+        algo=0
+        outTuple.Fill(e,SVFit,cat,jt1,jt2,LepP,LepM,lepList,isMC,era, goodMuonList, algo, doJME, varSystematics) 
 
-            if maxPrint > 0 :
-                maxPrint -= 1
-                print("\n\nGood Event={0:d} cat={1:s}  MCcat={2:s}".format(e.event,cat,GF.eventID(e)))
-                print("goodMuonList={0:s} goodElectronList={1:s} Mll={2:.1f} bestTauPair={3:s}".format(
-                    str(goodMuonList),str(goodElectronList),M,str(bestTauPair)))
-                print("Lep1.pt() = {0:.1f} Lep2.pt={1:.1f}".format(pairList[0].Pt(),pairList[1].Pt()))
-                GF.printEvent(e)
-                print("Event ID={0:s} cat={1:s}".format(GF.eventID(e),cat))
+
+        if (pairList and lepList and args.genMatch and len(goodMuonList)>2): 
+
+            daughter1 = e.Muon_genPartIdx[lepList[0]]
+            daughter2 = e.Muon_genPartIdx[lepList[1]]
+            #print daughter1,daughter2
                 
-#if args.genMatch:
-    #print genHistos
-    #for cat in genHistos.keys():
-    #    genHistos[cat][0].Write(genHistos[cat][0].GetName(),TObject.kOverwrite) 
-    #    genHistos[cat][1].Write(genHistos[cat][1].GetName(),TObject.kOverwrite)
-    #    genHistos[cat][2].Write(genHistos[cat][2].GetName(),TObject.kOverwrite)
-    #    genHistos[cat][3].Write(genHistos[cat][3].GetName(),TObject.kOverwrite) 
+            genHistos[cat+":"+str(algo)][0].Fill(10.0)
+            genHistos[cat+":"+str(algo)][1].Fill(10.0)
+            #print "event   ",e.event," the dimuon pair selected ", lepList," pt ",pairList[0].Pt()," eta ",pairList[0].Eta()," phi ",pairList[0].Phi()," pt ",pairList[1].Pt()," eta ",pairList[1].Eta()," phi ",pairList[1].Phi()
+            motherIndex1 = 0.0
+            motherIndex2 = 0.0
+            motherIndex1  = tauFun.findAMother(e,36,daughter1)
+            #print "final mother index of leg 1",motherIndex1
+            motherIndex2  = tauFun.findAMother(e,36,daughter2)
+            #print "final mother index of leg 2",motherIndex2
+
+            #if abs(e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]])==36 and (e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]==e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]):
+            if daughter1>0 and abs(e.GenPart_pdgId[daughter1])==13 and (motherIndex1==motherIndex2):
+                genHistos[cat+":"+str(algo)][0].Fill(2.0)
+            elif daughter1>0 and abs(e.GenPart_pdgId[daughter1])==13 and motherIndex1>0:
+                genHistos[cat+":"+str(algo)][0].Fill(1.0)
+            elif daughter1>0 and abs(e.GenPart_pdgId[daughter1])==13 and motherIndex1==-1:
+                genHistos[cat+":"+str(algo)][0].Fill(-1.0)
+            #print " 1 Muon Index ",e.daughter0]]," 1 Muon ID ",e.GenPart_pdgId[e.Muon_genPartIdx[lepList[0]]]," 1 Muon Mother Index ",e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]," 1 Muon Mother ID ",e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]]
+            else:
+                genHistos[cat+":"+str(algo)][0].Fill(0.0)
+            #if abs(e.GenPart_pdgId[e.daughter1]]])==13 and abs(e.GenPart_pdgId[e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]])==36 and (e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[0]]]==e.GenPart_genPartIdxMother[e.Muon_genPartIdx[lepList[1]]]):
+            if daughter2>0 and abs(e.GenPart_pdgId[daughter2])==13 and (motherIndex1==motherIndex2):
+                genHistos[cat+":"+str(algo)][1].Fill(2.0)
+            elif daughter2>0 and abs(e.GenPart_pdgId[daughter2])==13 and motherIndex2>0:
+                genHistos[cat+":"+str(algo)][1].Fill(1.0)
+            elif daughter2>0 and abs(e.GenPart_pdgId[daughter2])==13 and motherIndex2==-1:
+                genHistos[cat+":"+str(algo)][1].Fill(-1.0)
+            else:
+                genHistos[cat+":"+str(algo)][1].Fill(0.0)
+
+        if maxPrint > 0 :
+            maxPrint -= 1
+            print("\n\nGood Event={0:d} cat={1:s}  MCcat={2:s}".format(e.event,cat,GF.eventID(e)))
+            print("goodMuonList={0:s} goodElectronList={1:s} Mll={2:.1f} bestTauPair={3:s}".format(
+                str(goodMuonList),str(goodElectronList),M,str(bestTauPair)))
+            print("Lep1.pt() = {0:.1f} Lep2.pt={1:.1f}".format(pairList[0].Pt(),pairList[1].Pt()))
+            GF.printEvent(e)
+            print("Event ID={0:s} cat={1:s}".format(GF.eventID(e),cat))
+                
 
 dT = time.time() - tStart
 print("Run time={0:.2f} s  time/event={1:.1f} us".format(dT,1000000.*dT/count))
