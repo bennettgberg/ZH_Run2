@@ -14,6 +14,8 @@ def getArgs() :
     parser.add_argument("-c","--concatenate",default=5,type=int,help="On how many files to run on each job")
     parser.add_argument("-s","--selection",default='HAA',type=str,help="select ZH,AZH,HAA")
     parser.add_argument("-g","--genmatch",default=0,type=int,help="genmatch")
+    parser.add_argument("-p","--proxypath",default="/afs/cern.ch/user/s/shigginb/private/x509up",type=str,help="Full path to proxy certificate file (for condor)")
+    parser.add_argument("-l","--language",default="bash",type=str,help="Language for scripts to run (only bash or tcsh is supported for now.)")
     return parser.parse_args()
 
 def beginBatchScriptTcsh(baseFileName) :
@@ -84,9 +86,12 @@ for nFile in range(0, len(dataset),mjobs) :
     #print("nFile={0:d} file[:80]={1:s}".format(nFile,file[:80]))
 
     #scriptName = "{0:s}_{1:03d}.csh".format(args.nickName,nFile+1)
-    scriptName = "{0:s}_{1:03d}.sh".format(args.nickName,nFile+1)
+    scriptName = "{0:s}_{1:03d}.{2:s}sh".format(args.nickName,nFile+1, "c" if not args.language == "bash" else "")
     print("scriptName={0:s}".format(scriptName))
-    outLines = beginBatchScript(scriptName)
+    if args.language == "bash":
+        outLines = beginBatchScript(scriptName)
+    else:
+        outLines = beginBatchScriptTcsh(scriptName)
 
     #outLines.append("tar -zxvf SFs.tar.gz\n")
     outLines.append("cp MCsamples_*csv MCsamples.csv\n")
@@ -119,7 +124,6 @@ for nFile in range(0, len(dataset),mjobs) :
 # now that .csh files have been generated make a list of corresponding .jdl files
 
 #dir = '/uscms_data/d3/alkaloge/ZH/CMSSW_10_2_9/src/MC/'
-
 dir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/MC/"
 dirData = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/data/"
 funcsDir = os.getenv("CMSSW_BASE")+"/src/ZH_Run2/funcs/"
@@ -137,14 +141,17 @@ print("dir={0:s}".format(dir))
 for file in scriptList :
     #base = file[:-4] 
     base = file[:-3] 
+    if args.language != "bash":
+        base = base[:-1]
     #print base,"     OR     ",file[:-3]
     outLines = ['universe = vanilla\n']
     outLines.append('Executable = {0:s}\n'.format(file))
     outLines.append('Output = {0:s}.out\n'.format(base))
     outLines.append('Error = {0:s}.err\n'.format(base))
     outLines.append('Log = {0:s}.log\n'.format(base))
-    outLines.append('Proxy_filename = x509up\n')
-    outLines.append('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)\n')
+#    outLines.append('Proxy_filename = x509up\n')
+    #outLines.append('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)\n')
+    outLines.append('Proxy_path = {}\n'.format(args.proxypath))
     print("dir={0:s}".format(dir))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}ScaleFactor.py, {0:s}SFs.tar.gz, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
