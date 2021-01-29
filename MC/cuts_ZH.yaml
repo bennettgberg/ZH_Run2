@@ -1,10 +1,11 @@
 ---
 trig:
   singleLepton: false
-  doubleLepton: false 
+  doubleLepton: false
+  tripleLepton: false
 mll:
   mll_low: 60.
-  mll_high: 120. 
+  mll_high: 120.
 tt:
   tau_pt: 20
   tau_eta: 2.3
@@ -40,7 +41,7 @@ mt:
   tau_vJet: 1
   tau_vMu: 8
   tau_vEle: 4
-em: 
+em:
   mu_ID: false
   mu_dxy: 0.045
   mu_dz: 0.2
@@ -95,7 +96,7 @@ mm:
   mu_dz: 0.2
   mu_type: true
   ll_DR: 0.3
-ee: 
+ee:
   ele_pt: 10.
   ele_eta: 2.5
   ele_dxy: 0.045
@@ -116,7 +117,7 @@ mextra:
   mu_dz: 0.3
   mu_type: true
   ll_DR: 0.3
-eextra: 
+eextra:
   ele_pt: 10.
   ele_eta: 2.5
   ele_dxy: 0.045
