@@ -18,20 +18,35 @@ with io.open('cuts_HAA.yaml', 'r') as stream:
     selections = yaml.load(stream)
 print "Using selections:\n", selections
 
+'''
+for reco tauh matched to electrons at gen level in the format (dm0, dm1): for 2016 (-0.5%, +6.0%), for 2017 (+0.3%, +3.6%), for 2018 (-3.2%, +2.6%)
+for reco tauh matched to muons at gen level in the format (dm0, dm1): for 2016 (+0.0%, -0.5%), for 2017 (+0.0%, +0.0%), for 2018 (-0.2%, -1.0%)
+'''
+
 def goodTrigger(e, year):
     trig = selections['trig']
     if not (trig['singleLepton'] or trig['doubleLepton']) : return True
-    
-    if year == 2016 :
-        goodSingle = (e.HLT_Ele27_eta2p1_WPTight_Gsf or e.HLT_Ele25_eta2p1_WPTight_Gsf
-                      or e.HLT_IsoMu24 or e.HLT_IsoTkMu24 or e.HLT_IsoMu27) 
-        goodDouble = (e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
-                      or e.HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ )
-    elif (year == 2017 or year == 2018) :
-        goodSingle = (e.HLT_Ele35_WPTight_Gsf or e.HLT_Ele32_WPTight_Gsf or e.HLT_IsoMu24 or e.HLT_IsoMu27)
+    #single mu 2016: HLT IsoMu22 v, HLT IsoMu22 eta2p1 v, HLT IsoTkMu22 v, HLT IsoTkMu22 eta2p1 v and cut pt(mu)>23, eta(mu)<2.1
+    #single ele 2016: HLT Ele25 eta2p1 WPTight Gsf v and cut pt(ele)>26, eta(ele)<2.1
+    #single mu 2017: HLT IsoMu24 v, HLT IsoMu27 v and cut pt(mu)>25, eta(mu)<2.4
+    #single ele 2017: HLT Ele27 WPTight Gsf v, HLT Ele32 WPTight Gsf v, HLT Ele35 WPTight Gsf v and cut pt(ele)>28, eta(ele)<2.1
+    #single mu 2018: HLT IsoMu24 v, HLT IsoMu27 v and cut pt(mu)>25, eta(mu)<2.4
+    #single ele 2018:  HLT Ele32 WPTight Gsf v, HLT Ele35 WPTight Gsf v and cut pt(ele)>33, eta(ele)<2.1
+   
+ 
 
-        goodDouble = (e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
-                     or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8 or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8)
+   
+    if year == 2016 :
+        goodSingle = (e.HLT_IsoMu22 or e.HLT_IsoMu22_eta2p1 or e.HLT_IsoTkMu22 or e.HLT_IsoTkMu22_eta2p1 or e.HLT_Ele25_eta2p1_WPTight_Gsf or e.HLT_Ele27_eta2p1_WPTight_Gsf or e.HLT_IsoMu24 or e.HLT_IsoTkMu24 or e.HLT_IsoMu27)
+
+        goodDouble = (e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ or e.HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ )
+    elif (year == 2017 or year == 2018) :
+        goodSingle = (e.HLT_Ele27_WPTight_Gsf or e.HLT_Ele35_WPTight_Gsf or e.HLT_Ele32_WPTight_Gsf or e.HLT_IsoMu24 or e.HLT_IsoMu27)
+
+        goodDouble = (e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL or e.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ  or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8 or e.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8)
+    
+
+
     else :
         print("Invalid year={0:d} in goodTrigger()".format(year))
         return False
@@ -78,6 +93,7 @@ def getTauList(channel, entry, pairList=[],printOn=False) :
             #for tttt channel, pairList is empty since non-tau leptons don't matter (?)
             if DR0 < tt['lt_DR'] or DR1 < tt['lt_DR']: continue
         tauList.append(j)
+        #print ord(entry.Tau_idDeepTau2017v2p1VSmu[j]), ord(entry.Tau_idDeepTau2017v2p1VSe[j]), ord(entry.Tau_idDeepTau2017v2p1VSjet[j])
     
     return tauList
 
@@ -92,6 +108,12 @@ def getGoodTauList(entry, printOn=False) :
 
     tauList = []
     tt = selections['tt'] # selections for H->tau(h)+tau(h)
+
+    #for j in range(entry.nTau):   
+    '''
+    for reco tauh matched to electrons at gen level in the format (dm0, dm1): for 2016 (-0.5%, +6.0%), for 2017 (+0.3%, +3.6%), for 2018 (-3.2%, +2.6%)
+    for reco tauh matched to muons at gen level in the format (dm0, dm1): for 2016 (+0.0%, -0.5%), for 2017 (+0.0%, +0.0%), for 2018 (-0.2%, -1.0%)
+    '''
     for j in range(entry.nTau):    
         # apply tau(h) selections 
         if entry.Tau_pt[j] < tt['tau_pt']: 
@@ -1458,6 +1480,7 @@ def goodElectron(entry, j) :
     if abs(entry.Electron_dxy[j]) > ee['ele_dxy']: return False
     if abs(entry.Electron_dz[j]) > ee['ele_dz']: return False
     if ord(entry.Electron_lostHits[j]) > ee['ele_lostHits']: return False
+    if ee['ele_iso_f'] and entry.Electron_pfRelIso03_all[j] >  ee['ele_iso']: return False
     if ee['ele_convVeto']:
         if not entry.Electron_convVeto[j]: return False
     if ee['ele_ID']:
@@ -1536,6 +1559,7 @@ def goodElectronExtraLepton(entry, j) :
     if abs(entry.Electron_dxy[j]) > ee['ele_dxy']: return False
     if abs(entry.Electron_dz[j]) > ee['ele_dz']: return False
     if ord(entry.Electron_lostHits[j]) > ee['ele_lostHits']: return False
+    if ee['ele_iso_f'] and entry.Electron_pfRelIso03_all[j] >  ee['ele_iso']: return False
     if ee['ele_convVeto']:
         if not entry.Electron_convVeto[j]: return False
     if ee['ele_ID']:
@@ -1853,6 +1877,7 @@ def findZ(goodElectronList, goodMuonList, entry) :
     mm = selections['mm'] # H->tau(mu)+tau(h) selections
     selpair,pairList, mZ, bestDiff = [],[], 91.19, 99999. 
     nElectron = len(goodElectronList)
+    #print 'going in tauFun', goodElectronList, nElectron, entry.event, entry.luminosityBlock, entry.run, bestDiff
     if nElectron > 1 :
         for i in range(nElectron) :
             ii = goodElectronList[i] 
@@ -1860,22 +1885,25 @@ def findZ(goodElectronList, goodMuonList, entry) :
             e1.SetPtEtaPhiM(entry.Electron_pt[ii],entry.Electron_eta[ii],entry.Electron_phi[ii],0.0005)
             for j in range(i+1,nElectron) :
                 jj = goodElectronList[j]
+                #print 'going in tauFun masses', goodElectronList, nElectron, entry.event, entry.luminosityBlock, entry.run, 'for', jj, ii, entry.Electron_charge[ii],  entry.Electron_charge[jj]
                 if entry.Electron_charge[ii] != entry.Electron_charge[jj] :
                     e2 = TLorentzVector()
                     e2.SetPtEtaPhiM(entry.Electron_pt[jj],entry.Electron_eta[jj],entry.Electron_phi[jj],0.0005)
                     cand = e1 + e2
                     mass = cand.M()
 		    #if mass < 60 or mass > 120 : continue
+                    #print 'going in tauFun masses', goodElectronList, nElectron, entry.event, entry.luminosityBlock, entry.run, bestDiff, 'is abs(mass-mZ > bestDiff', abs(mass-mZ), bestDiff, 'for', jj, ii
                     if abs(mass-mZ) < bestDiff :
                     #if (abs(mass) < 60.) and (abs(mass) > 15.):
                         bestDiff = abs(mass-mZ)
+                        #print 'masses', bestDiff, mass, entry.Electron_charge[jj], entry.Electron_charge[ii], entry.event, entry.luminosityBlock, entry.run, 'elect', jj, ii, goodElectronList
                         if entry.Electron_charge[ii] > 0. :
                             pairList = [e1,e2]
                             selpair = [ii,jj]
                         else : 
                             pairList = [e2,e1]
                             selpair = [jj,ii]
-                            
+                           
     nMuon = len(goodMuonList)
     if nMuon > 1 : 
         # find mass pairings
@@ -1906,6 +1934,7 @@ def findZ(goodElectronList, goodMuonList, entry) :
     #  
     #printEvents=[365,35,357]
     #if entry.event in printEvents:
+    #print 'returning', selpair,  'is muon', nMuon, goodMuonList, 'isEl', nElectron, goodElectronList, entry.event, entry.luminosityBlock, entry.run
     return pairList, selpair
                     
                     
