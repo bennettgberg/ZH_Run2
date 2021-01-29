@@ -16,14 +16,18 @@ def getArgs() :
     parser.add_argument("-g","--genmatch",default=0,type=int,help="genmatch")
     parser.add_argument("-p","--proxypath",default="/afs/cern.ch/user/s/shigginb/private/x509up",type=str,help="Full path to proxy certificate file (for condor)")
     parser.add_argument("-l","--language",default="bash",type=str,help="Language for scripts to run (only bash or tcsh is supported for now.)")
+    parser.add_argument("-tttt","--tau4",default=0,type=int,help="4tau version (1) or normal version (0)")
+    parser.add_argument("-myeos","--my_eos",default=0,type=int,help="input files will exist in my personal eos space (1) or won't (0)")
     return parser.parse_args()
 
 def beginBatchScriptTcsh(baseFileName) :
     outLines = ['#!/bin/tcsh\n']
     outLines.append("source /cvmfs/cms.cern.ch/cmsset_default.csh\n")
-    outLines.append("setenv SCRAM_ARCH slc6_amd64_gcc700\n")
-    outLines.append("eval `scramv1 project CMSSW CMSSW_10_2_16_patch1`\n")
-    outLines.append("cd CMSSW_10_2_16_patch1/src\n")
+    #outLines.append("setenv SCRAM_ARCH slc6_amd64_gcc700\n")
+    outLines.append("setenv SCRAM_ARCH slc7_amd64_gcc700\n")
+    outLines.append("eval scramv1 project CMSSW CMSSW_10_2_9\n")
+    #outLines.append("cd CMSSW_10_2_16_patch1/src\n")
+    outLines.append("cd CMSSW_10_2_9/src\n")
     outLines.append("eval `scramv1 runtime -csh`\n")
     outLines.append("echo ${_CONDOR_SCRATCH_DIR}\n")
     outLines.append("cd ${_CONDOR_SCRATCH_DIR}\n")
@@ -55,6 +59,10 @@ era = str(args.year)
 # sample query 
 # dasgoclient --query="file dataset=/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8*/*/NANOAOD*" --limit=0   
 
+#string to be added in some cases is 4tau is specified.
+ttttstr = ""
+if args.tau4 != 0:
+    ttttstr = "_4tau"
 query = '"file dataset={0:s}"'.format(args.dataSet)
 
 if "USER" in str(args.dataSet) : query = '"file dataset={0:s}"'.format(args.dataSet+" instance=prod/phys03")
@@ -105,14 +113,28 @@ for nFile in range(0, len(dataset),mjobs) :
         #for j in range(0,mjobs) :
     for j in range(0,maxx) :
         #print 'shoud see', nFile+maxx, maxx, len(dataset)
+    #bpg: changes for my_eos are somewheres around here boi
         fileloop=dataset[nFile:nFile+maxx][j]
-        outLines.append("xrdcp root://cms-xrd-global.cern.ch/{0:s} inFile.root\n".format(fileloop)) 
+        if not args.my_eos:
+            outLines.append("xrdcp root://cms-xrd-global.cern.ch/{0:s} inFile.root\n".format(fileloop)) 
+        else:
+            #need to extract the filename and copy it from eos.
+            words = fileloop.split("/")
+            fname = words[len(words)-1]
+            #for now this is always signal
+            aMassString = args.nickName.split('_')[-1]
+            outLines.append("xrdcp root://cmseos.fnal.gov//store/user/bgreenbe/haa_4tau/signal_{}/{} inFile.root\n".format(aMassString, fname))
         outFileName = "{0:s}_{1:03d}.root".format(args.nickName,nFile+j)
-        outLines.append("python HAA.py -f inFile.root -o {0:s} --nickName {1:s} --csv {2:s} -y {3:s} -s {4:s} -w 1 -g {5:d}\n".format(outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch))
+        #print("python HAA{}.py -f inFile.root -o {} --nickName {} --csv {} -y {} -s {} -w 1 -g {}\n".format(ttttstr, outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch))
+        outLines.append("python HAA{6:s}.py -f inFile.root -o {0:s} --nickName {1:s} --csv {2:s} -y {3:s} -s {4:s} -w 1 -g {5:d}\n".format(outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch, ttttstr))
+        #copy the file to eos.
+#        outLines.append("xrdcp {0:s} root://cmseos.fnal.gov//store/user/bgreenbe/haa_4tau/{1:s}/{0:s}\n".format(outFileName, args.nickName))
         outLines.append("rm inFile.root\n")
 
 
+    allname = "all_{0:s}_{1:03d}.root".format(args.nickName, nFile+1) #can use below instead of rewriting twice.
     outLines.append("hadd -f -k all_{0:s}_{1:03d}.root *ntup *weights\n".format(args.nickName,nFile+1))
+    outLines.append("xrdcp all_{0:s}_{1:03d}.root root://cmseos.fnal.gov//store/user/bgreenbe/haa_4tau/{0:s}\n".format(args.nickName, nFile+1))
     outLines.append("rm *.pyc\nrm *.so\nrm *.pcm\nrm *cc.d\n")
     outLines.append("rm *.ntup *.weights *.so\nrm *.pcm\nrm *cc.d\n")
     print("Writing out file = {0:s}".format(scriptName))
@@ -155,9 +177,9 @@ for file in scriptList :
     print("dir={0:s}".format(dir))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}ScaleFactor.py, {0:s}SFs.tar.gz, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
     #outLines.append('transfer_input_files = {0:s}ZH.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, '.format(dir,args.year, args.selection))
-    outLines.append('transfer_input_files = {0:s}HAA.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, {0:s}{3:s},'.format(dir,args.year, args.selection, args.csv))
+    outLines.append('transfer_input_files = {0:s}HAA{4:s}.py, {0:s}MC_{1:s}.root, {0:s}data_pileup_{1:s}.root, {0:s}MCsamples_{1:s}.csv, {0:s}cuts_{2:s}.yaml, {0:s}{3:s},'.format(dir,args.year, args.selection, args.csv, ttttstr))
     #outLines.append('{0:s}*txt, '.format(dirData))
-    outLines.append('{0:s}tauFun.py, {0:s}generalFunctions.py, {0:s}outTuple.py,'.format(funcsDir))
+    outLines.append('{0:s}tauFun{1:s}.py, {0:s}generalFunctions.py, {0:s}outTuple{1:s}.py,'.format(funcsDir, ttttstr))
     outLines.append('{0:s}FastMTT.h, {0:s}MeasuredTauLepton.h, {0:s}svFitAuxFunctions.h,'.format(SVFitDir)) 
     outLines.append('{0:s}FastMTT.cc, {0:s}MeasuredTauLepton.cc, {0:s}svFitAuxFunctions.cc\n'.format(SVFitDir))
     outLines.append('should_transfer_files = YES\n')

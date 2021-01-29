@@ -15,6 +15,7 @@ def getArgs() :
     parser.add_argument("-p","--proxypath",default="/afs/cern.ch/user/s/shigginb/private/x509up",type=str,help="Full path to proxy certificate file (for condor)")
     parser.add_argument("-l","--language",default="bash",type=str,help="Language for scripts to run (only bash or tcsh is supported for now.)")
     parser.add_argument("-m","--makeCondor",default="../../makeCondorsam.py",type=str,help="makeCondor script to call")
+    parser.add_argument("-tttt","--tau4",default=0,type=int,help="4tau version (1) or normal version (0)")
     return parser.parse_args()
 
 args = getArgs() 
@@ -32,7 +33,7 @@ for line in open(args.inFile,'r').readlines() :
     mode = 'anaXRD'
     
     outLines.append("mkdir -p {0:s}/{1:s}_{2:s}\ncd {0:s}/{1:s}_{2:s}\n".format(args.selection,nickname,era))
-    outLines.append("python ../../{9:s} --dataSet {0:s} --nickName {1:s} --csv {2:s} --mode {3:s} --year {4:s} -c 5 -s {5:s} -g {6:d} -p {7:s} -l {8:s}\n".format(dataset,nickname, args.csv, mode,era, args.selection, args.genmatch, args.proxypath, args.language, args.makeCondor))
+    outLines.append("python ../../{9:s} --dataSet {0:s} --nickName {1:s} --csv {2:s} --mode {3:s} --year {4:s} -c 5 -s {5:s} -g {6:d} -p {7:s} -l {8:s} -tttt {10:d}\n".format(dataset,nickname, args.csv, mode,era, args.selection, args.genmatch, args.proxypath, args.language, args.makeCondor, args.tau4))
     outLines.append("cd {0:s}\n".format(cwd))
 
 fOut='runMC_{0:s}_{1:s}.sh'.format(str(args.year),args.selection)

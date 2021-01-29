@@ -7,6 +7,7 @@ import yaml
 import subprocess
 from ROOT import TLorentzVector
 from math import sqrt, sin, cos, pi
+import generalFunctions as GF
 
 __author__ = "Dan Marlow, Alexis Kalogeropoulos, Gage DeZoort, Sam Higginbotham"
 __date__   = "Monday, Oct. 28th, 2019"
@@ -71,15 +72,18 @@ def getTauList(channel, entry, pairList=[],printOn=False) :
             if printOn : print("        fail DeepTau vs.  mu={0:d}".format(ord(entry.Tau_idDeepTau2017v2p1VSmu[j])))
             continue
 
-        eta, phi = entry.Tau_eta[j], entry.Tau_phi[j]
-        DR0, DR1 =  lTauDR(eta,phi, pairList[0]), lTauDR(eta,phi,pairList[1]) 
-        if DR0 < tt['lt_DR'] or DR1 < tt['lt_DR']: continue
+        if not pairList == []:
+            eta, phi = entry.Tau_eta[j], entry.Tau_phi[j]
+            DR0, DR1 =  lTauDR(eta,phi, pairList[0]), lTauDR(eta,phi,pairList[1]) 
+            #for tttt channel, pairList is empty since non-tau leptons don't matter (?)
+            if DR0 < tt['lt_DR'] or DR1 < tt['lt_DR']: continue
         tauList.append(j)
     
     return tauList
 
 
-def getGoodTauList(channel, entry, printOn=False) :
+#def getGoodTauList(channel, entry, printOn=False) :
+def getGoodTauList(entry, printOn=False) :
     """ tauFun.getTauList(): return a list of taus that 
                              pass the basic selection cuts               
     """
@@ -90,17 +94,34 @@ def getGoodTauList(channel, entry, printOn=False) :
     tt = selections['tt'] # selections for H->tau(h)+tau(h)
     for j in range(entry.nTau):    
         # apply tau(h) selections 
-        if entry.Tau_pt[j] < tt['tau_pt']: continue
-        if abs(entry.Tau_eta[j]) > tt['tau_eta']: continue
-        if abs(entry.Tau_dz[j]) > tt['tau_dz']: continue
-        if not entry.Tau_idDecayModeNewDMs[j]: continue
-	if  entry.Tau_decayMode[j] == 5 or entry.Tau_decayMode[j] == 6 : continue
-        if abs(entry.Tau_charge[j]) != 1: continue
-
+        if entry.Tau_pt[j] < tt['tau_pt']: 
+            if printOn: 
+                print("      fail tau pt threshold. tau={}, pt={}".format(j, entry.Tau_pt[j]))
+            continue
+        if abs(entry.Tau_eta[j]) > tt['tau_eta']: 
+            if printOn: 
+                print("      fail tau eta cut. tau={}, eta={}".format(j, entry.Tau_eta[j]))
+            continue
+        if abs(entry.Tau_dz[j]) > tt['tau_dz']: 
+            if printOn: 
+                print("      fail tau dz cut. tau={}, dz={}".format(j, entry.Tau_dz[j]))
+            continue
+        if not entry.Tau_idDecayModeNewDMs[j]: 
+            if printOn: 
+                print("      fail tau idDecayModeNewDMs cut. tau={}, idDecayModeNewDMs={}".format(j, entry.Tau_idDecayModeNewDMs[j]))
+            continue
+        if  entry.Tau_decayMode[j] == 5 or entry.Tau_decayMode[j] == 6 : 
+            if printOn: 
+                print("      fail tau decay mode cut. tau={}, decay mode={}".format(j, entry.Tau_decayMode[j]))
+            continue
+        if abs(entry.Tau_charge[j]) != 1: 
+            if printOn: 
+                print("      fail tau charge cut. tau={}, decay mode={}".format(j, entry.Tau_decayMode[j]))
+            continue
         if tt['tau_vJet'] > 0  and not ord(entry.Tau_idDeepTau2017v2p1VSjet[j]) & tt['tau_vJet'] > 0 :
             if printOn : print("        fail DeepTau vs. Jet={0:d}".format(ord(entry.Tau_idDeepTau2017v2p1VSjet[j])))
             continue
-	if tt['tau_vEle'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSe[j]) & tt['tau_vEle'] > 0 :
+        if tt['tau_vEle'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSe[j]) & tt['tau_vEle'] > 0 :
             if printOn : print("        fail DeepTau vs. ele={0:d}".format(ord(entry.Tau_idDeepTau2017v2p1VSe[j])))
             continue
         if tt['tau_vMu'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSmu[j]) & tt['tau_vMu'] > 0 :
@@ -266,7 +287,8 @@ def getBestTauPair(channel, entry, tauList) :
     return tauPairList[0]
 
 #for AA->4Tau
-def get2BestTauPairPt(channel, entry, tauList) :
+#opp is True if you are requring the leading taus to be oppositely charged.
+def get2BestTauPairPt(channel, entry, tauList, opp=False) :
     """ tauFun.get2BestTauPairPt(): return two tau pairs that 
                                  best represent H->tt
     """ 
@@ -282,8 +304,9 @@ def get2BestTauPairPt(channel, entry, tauList) :
     tt = selections['tt'] # selections for H->(tau_h)(tau_h)
     for i in range(len(tauList)) :
         idx_tau1 = tauList[i]
-        for j in range(len(tauList)) :
-            if i == j: continue
+        #don't need both [i,j] and [j,i].
+        for j in range(i+1, len(tauList)) :
+#            if i == j: continue
             idx_tau2 = tauList[j]
             if tauDR(entry, idx_tau1, idx_tau2) < tt['tt_DR'] : continue
             tauPairList.append([idx_tau1, idx_tau2])
@@ -291,44 +314,252 @@ def get2BestTauPairPt(channel, entry, tauList) :
     # Sort the pair list using a bubble sort
     # The list is not fully sorted, since only the top 2 pairings are needed
         #BUT these two pairings cannot share any taus.
+    idx_pair1 = -1
     idx_pair2 = -1 #correct index for the second pair (with taus that are not shared with the first pair)
     for k in range(len(tauPairList)):
-        for i in range(len(tauPairList)-1,0,-1) :
-            if comparePair(entry, tauPairList[i],tauPairList[i-1]) : 
-                tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
+        for i in range(len(tauPairList)-1,k,-1) :
+            if not comparePairPt(entry, tauPairList[i],tauPairList[i-1]) : 
+                #swap i and i-1.
+#                tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
+                temp = tauPairList[i-1]
+                tauPairList[i-1] = tauPairList[i]
+                tauPairList[i] = temp
+            if entry.event == 362468: print("k={}, i={}, tauPairList={}".format(k, i, str(tauPairList)))
+        #if opp is false then idx_pair1 is always 0
+        if idx_pair1 < 0:
+            if not opp:
+                idx_pair1 = 0
+            #if the two taus are oppositely charged, then they are a viable candidate for pair1.
+            elif entry.Tau_charge[tauPairList[k][0]]*entry.Tau_charge[tauPairList[k][1]] < 0:
+                idx_pair1 = k
         #if we have 2 pairs with 4 unique taus then we're done.
-        if k >= 1 and tauPairList[k][0] not in tauPairList[0] and tauPairList[k][1] not in tauPairList[0]:
-            print("good 4tau event! event={}, idx_pair2={}".format(entry.event, idx_pair2))
+        elif tauPairList[k][0] not in tauPairList[idx_pair1] and tauPairList[k][1] not in tauPairList[idx_pair1]:
+            #for pair2, the taus don't necessarily have to be oppositely charged. They just have to be unique from pair1.
             idx_pair2 = k
+            print("good 4tau event! event={}, idx_pair2={}".format(entry.event, idx_pair2))
             break
 #    if len(tauPairList) < 2 : return []
     #if idx_pair2 is not a valid index then there were not 2 fully unique pairs.
-    if idx_pair2 < 1: return []
+    if idx_pair2 < 0: return []
     #now make sure the 2 taus within each pair are sorted by pT.
-    for k in [0, idx_pair2]:
+    for k in [idx_pair1, idx_pair2]:
         idx_tau1, idx_tau2 = tauPairList[k][0], tauPairList[k][1]
         if entry.Tau_pt[idx_tau2] > entry.Tau_pt[idx_tau1] : 
             temp = tauPairList[k][0]
             tauPairList[k][0] = tauPairList[k][1]
             tauPairList[k][1] = temp
        #return as a list of length 4 
-    return [tauPairList[0][0], tauPairList[0][1], tauPairList[idx_pair2][0], tauPairList[idx_pair2][1]]
+    return [tauPairList[idx_pair1][0], tauPairList[idx_pair1][1], tauPairList[idx_pair2][0], tauPairList[idx_pair2][1]]
 
-def comparePairPt(entry,pair1,pair2):
+#new comparePairPt function which is compatible with any particle types (just specify with lepTypes argument)
+def comparePairPt(entry,pair1,pair2, lepTypes='tt'):
     # a return value of True means that pair2 is "better" than pair 1 
     #"better" meaning has higher scalar pt sum
-    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
-    if (entry.Tau_pt[i2] + entry.Tau_pt[j2] > entry.Tau_pt[i1] + entry.Tau_pt[j1]):
-        return True 
+    pairs = [pair1, pair2]
+    ptsums = [0.0, 0.0]
+    #for each of the 2 pairs
+    for ii in range(2):
+        #for each of the 2 members of the pair
+        for jj in range(2):
+            #add the correct amount of pt to the correct place.
+            if lepTypes[jj] == 't':
+                add_pt = entry.Tau_pt[pairs[ii][jj]]
+            elif lepTypes[jj] == 'm':
+                add_pt = entry.Muon_pt[pairs[ii][jj]]
+            elif lepTypes[jj] == 'e':
+                add_pt = entry.Electron_pt[pairs[ii][jj]]
+            else:
+                print("Error in comparePairPt: unrecognized lepTypes: {}".format(lepTypes))
+                return False
+            ptsums[ii] += add_pt
+#    i1, i2, j1, j2 = pair1[0], pair2[0], pair1[1], pair2[1]
+#    if (entry.Tau_pt[i2] + entry.Tau_pt[j2] > entry.Tau_pt[i1] + entry.Tau_pt[j1]):
+#        return True 
     
-    return False
+#    return False
+    return (ptsums[1] > ptsums[0])
+
+#return dR between 2 particles with eta/phi coords (eta0,phi0) and (eta1,phi1).
+def pair_dR(eta0, phi0, eta1, phi1):
+    deta = eta1 - eta0
+    dphi = phi1 - phi0
+    #phi is circular, goes from -pi to pi
+    dphi = min(dphi, 2*pi - dphi)
+    return (deta**2 + dphi**2)**0.5
+
+#function to return a list of all valid pairs of valid particles
+#lepTypes: 2-char string of lepton types of each list (eg: ee, em, tt, mt,...)
+#list0,list1: list of all numbers (corresponding to the entry and the lepton type)
+def getAllPairs(lepTypes, entry, list0, list1, pairList):
+#    print("getAllPairs lepTypes: {}".format(lepTypes))
+    #mm and ee selections should instead use the mt/et selections for distance.
+    ll = lepTypes
+    if ll[0] == ll[1]:
+        ll = '{}{}'.format(ll[0], 't')
+    all_pairs = []
+    etas = [0., 0.]
+    phis = [0., 0.]
+    for a in list0:
+        useA = True #will be False if found not good for use (too close to leading pair).
+        for b in list1:
+            useB = True #will be False if b is found not good for use (too close to one of the leading pair taus).
+            #fill etas and phis for each of the two particles.
+            for i in range(2):
+                if i == 0:
+                    c = a
+                else:
+                    c = b
+                if lepTypes[i] == 't':
+                    etas[i] = entry.Tau_eta[c]
+                    phis[i] = entry.Tau_phi[c]
+                elif lepTypes[i] == 'm':
+                  #  print("c = {}, i = {}, list0={}, list1={}".format(c, i, str(list0), str(list1)))
+                  #  GF.printEvent(entry)
+                    etas[i] = entry.Muon_eta[c]
+                    phis[i] = entry.Muon_phi[c]
+                elif lepTypes[i] == 'e':
+                    etas[i] = entry.Electron_eta[c]
+                    phis[i] = entry.Electron_phi[c]
+            dr_cut = selections[ll]['lt_DR']
+            #be sure we are not too close the lead tau pair.
+    #        print("a={}, b={}, lead eta0={}, lead phi0={}, lead eta1={}, lead phi1={}".format(a, b, pairList[0].Eta(), pairList[0].Phi(), pairList[1].Eta(), pairList[1].Phi()))
+            for i in range(2):
+                #will skip if pairList is empty.
+                for l in pairList:
+                    dr = pair_dR(etas[i], phis[i], l.Eta(), l.Phi()) 
+                  #  print("a={}, b={}, i={}, l={}, dr={}".format(a, b, i, l, dr))
+                    if dr < dr_cut:
+                        if i == 0: 
+                            useA = False
+                        else:
+                            useB = False
+                        break
+                #no need to go through the next iteration if we're already not using this pairing.
+                if not useA or not useB: break
+            if not useA: break
+            if not useB: continue
+#            print("a={}, b={} passed pairList cut.".format(a,b))
+            #now calculate DR
+            dr = pair_dR(etas[0], phis[0], etas[1], phis[1])
+            #determine if dr is sufficient
+            if dr < dr_cut:
+                continue
+#            if sufficient, append to all_pairs.
+            all_pairs.append([a,b])
+
+    return all_pairs
+            
+#partially sort list 'items' so that the first item is in the right place.
+def bubble1(lepTypes, entry, items):
+    # Sort the pair list using a bubble sort
+    # The list is not fully sorted, since only the top pairing is needed
+    for i in range(len(items)-1,0,-1) :
+        #corrected 2020/07/20
+        if not comparePairPt(entry, items[i], items[i-1], lepTypes) : 
+            items[i-1], items[i] = items[i], items[i-1] 
+    return items
+
+#return a 4-vector representing this leptons in entry.
+def get4vec(lepType, entry, lep):
+    #get their 4-momenta.
+    lep4 = TLorentzVector() #leading muon
+    #lepton mass
+    mlep = 0.0
+    pt = 0.0
+    eta = 0.0
+    phi = 0.0
+    #electron
+    if lepType == 'e':
+        mlep = .0005
+        pt = entry.Electron_pt[lep]
+        eta = entry.Electron_eta[lep]
+        phi = entry.Electron_phi[lep]
+    #muon
+    elif lepType == 'm':
+        mlep = .105
+        pt = entry.Muon_pt[lep]
+        eta = entry.Muon_eta[lep]
+        phi = entry.Muon_phi[lep]
+    #tauon
+    elif lepType == 't':
+        mlep = 1.777
+        pt = entry.Tau_pt[lep]
+        eta = entry.Tau_eta[lep]
+        phi = entry.Tau_phi[lep]
+    else:
+        print("WARNING: unknown lepton type {}".format(lepType))
+    lep4.SetPtEtaPhiM(pt, eta, phi, mlep)
+    return lep4
+
+#return the best pair (depending on the channel, either tt, et, or mt, or em, or mm, or ee).
+# That is, the pair with the highest scalar sum pT.
+# Inputs list0, list1 should already be 'good', ie all individual
+#  lepton cuts are already made (channel-specific pair cuts will be made here).
+#def getBestPair(lepTypes, entry, eList, mList, tList, pairList=[]) :
+def getBestPair(lepTypes, entry, list0, list1, pairList=[]) :
+    """ tauFun.getBestPair(): return two taus that 
+                                 best represent H->tt
+    """ 
+    #types of leptons
+    ll = lepTypes #channel[2:]
+    #get the 2 lists of particles
+#    plist = [[],[]]
+#    for i in range(2):
+#        if ll[i] == 't':
+#            plist[i] = tList
+#        elif ll[i] == 'm':
+#            plist[i] = mList
+#        elif ll[i] == 'e':
+#            plist[i] = eList
+#        else:
+#            print("Error: unrecognized pairing {}".format(lepTypes))
+#            return []
+    #get all valid pairs with these 2 lists
+    #all_pairs = getAllPairs(ll, entry, plist[0], plist[1], pairList)
+#    print("getBestPair ll: {}".format(ll))
+    all_pairs = getAllPairs(ll, entry, list0, list1, pairList)
+    debug = False #True
+    if len(all_pairs) == 0:
+#        print("No valid pairs.")
+        #if pairList is empty then this was supposed to be the lead pair, so need [] for the 4vec too.
+        if pairList == []:
+            return [], []
+        return []
+    elif debug:
+        print("All pairs: {}".format(str(all_pairs)))
+    #sort these pairs enough to get the very best one.
+    all_pairs = bubble1(ll, entry, all_pairs)
+    
+    #if tt channel, make sure the highest pT tau comes first.
+    if ll[0] == ll[1]:
+        pt0, pt1 = 0., 0.
+        if ll == 'tt':
+            pt0 = entry.Tau_pt[all_pairs[0][0]]
+            pt1 = entry.Tau_pt[all_pairs[0][1]]
+        elif ll == 'mm':
+            pt0 = entry.Muon_pt[all_pairs[0][0]]
+            pt1 = entry.Muon_pt[all_pairs[0][1]]
+        elif ll == 'ee':
+            pt0 = entry.Electron_pt[all_pairs[0][0]]
+            pt1 = entry.Electron_pt[all_pairs[0][1]]
+        else:
+            print("Error in getBestSubPair: unrecognized pairing {}.".format(ll))
+        if pt1 > pt0:
+            all_pairs[0][0], all_pairs[0][1] = all_pairs[0][1], all_pairs[0][0]
+    #if this is the lead tau pair, we also need a Lorentz vector. 
+    if pairList == []:
+        vecs = []
+        for i in range(2):
+            vecs.append( get4vec(ll[i], entry, all_pairs[0][i]) )
+        return vecs, all_pairs[0] 
+    return all_pairs[0]
 
 def getBestTauPairPt(channel, entry, tauList) :
     """ tauFun.getBestTauPair(): return two taus that 
                                  best represent H->tt
     """ 
 
-    if not channel in ['mmtt','eett'] : 
+    if not channel in ['mmtt','eett', 'tttt'] : 
         print("Invalid channel={0:s} in tauFun.getBestTauPair()".format(channel))
         exit()
 
@@ -348,7 +579,8 @@ def getBestTauPairPt(channel, entry, tauList) :
     # Sort the pair list using a bubble sort
     # The list is not fully sorted, since only the top pairing is needed
     for i in range(len(tauPairList)-1,0,-1) :
-        if comparePairPt(entry, tauPairList[i],tauPairList[i-1]) : 
+        #corrected 2020/07/20
+        if not comparePairPt(entry, tauPairList[i],tauPairList[i-1]) : 
             tauPairList[i-1], tauPairList[i] = tauPairList[i], tauPairList[i-1] 
 
     if len(tauPairList) == 0 : return []
@@ -1080,13 +1312,141 @@ def goodMuon(entry, j ):
              
     return True 
 
-def makeGoodMuonList(entry) :
+def getGoodMuonList(entry) :
     goodMuonList = []
     for i in range(entry.nMuon) :
         if goodMuon(entry, i) : goodMuonList.append(i)
     #print("In tauFun.makeGoodMuonList = {0:s}".format(str(goodMuonList)))
     return goodMuonList
 
+#literally just print out info about why this cut was made.
+def printCut(event, lepTypes, lepType, num, cutType, val):
+    if lepType == 'e':
+        lepType = "electron"
+    elif lepType == 'm':
+        lepType = "muon"
+    elif lepType == 't':
+        lepType = "tauon"
+    print("      entry {}, lepTypes {}, {} {} failed {} cut: {}= {}".format(event, lepTypes, lepType, num, cutType, cutType, val))
+
+#return True if the electron is good, False if it fails any cuts.
+# lepTypes is the lepton flavor for each of the two particles, ie one of 'ee', 'em', 'et'.
+def goodElectron_4tau(lepTypes, entry, j, printOn=False):
+    sel = selections[lepTypes]
+    #if lepTypes is 'ee', we actually need to use the 'et' selections instead
+    # (since 'ee' selections are really for prompt electrons, which we're not interested in for 4tau analysis.)
+    if lepTypes == 'ee':
+        sel = selections['et']
+    if entry.Electron_pt[j] < sel['ele_pt']:
+        if printOn:
+            printCut(entry.event, lepTypes, 'e', j, "pt", entry.Electron_pt[j])
+        return False
+    if abs(entry.Electron_eta[j]) > sel['ele_eta'] :
+        if printOn:
+            printCut(entry.event, lepTypes, 'e', j, "eta", entry.Electron_eta[j])
+        return False
+    if abs(entry.Electron_dxy[j]) > sel['ele_dxy'] :
+        if printOn:
+            printCut(entry.event, lepTypes, 'e', j, "dxy", entry.Electron_dxy[j])
+        return False
+    if abs(entry.Electron_dz[j]) > sel['ele_dz'] :
+        if printOn:
+            printCut(entry.event, lepTypes, 'e', j, "dz", entry.Electron_dz[j])
+        return False
+    if ord(entry.Electron_lostHits[j]) > sel['ele_lostHits']:
+        if printOn:
+            printCut(entry.event, lepTypes, 'e', j, "lostHits", entry.Electron_lostHits[j])
+        return False 
+    return True
+
+#return True if the muon is good, False if it fails any cuts.
+# lepTypes is the lepton flavor for each of the two particles, ie one of 'mm', 'em', 'mt'.
+def goodMuon_4tau(lepTypes, entry, j, printOn=False):
+    sel = selections[lepTypes]
+    #if lepTypes is 'ee', we actually need to use the 'et' selections instead
+    # (since 'ee' selections are really for prompt electrons, which we're not interested in for 4tau analysis.)
+    if lepTypes == 'mm':
+        sel = selections['mt']
+    if entry.Muon_pt[j] < sel['mu_pt']:
+        if printOn:
+            printCut(entry.event, lepTypes, 'm', j, "pt", entry.Muon_pt[j])
+        return False
+    if abs(entry.Muon_eta[j]) > sel['mu_eta'] :
+        if printOn:
+            printCut(entry.event, lepTypes, 'm', j, "eta", entry.Muon_eta[j])
+        return False
+    if sel['mu_iso_f'] and entry.Muon_pfRelIso04_all[j] >  sel['mu_iso']: 
+        if printOn:
+            printCut(entry.event, lepTypes, 'm', j, "pfRelIso04", entry.Muon_pfRelIso04_all[j])
+        return False
+    if sel['mu_ID'] :
+        if not (entry.Muon_mediumId[j] or entry.Muon_tightId[j]): 
+            if printOn:
+                printCut(entry.event, lepTypes, 'm', j, "med/tight muID", "{},{}".format(entry.Muon_mediumId[j], entry.Muon_tightId[j]))
+            return False
+    if sel['mu_ID'] and not entry.Muon_looseId[j] : 
+        if printOn:
+            printCut(entry.event, lepTypes, 'm', j, "loose muId", entry.Muon_loosId[j])
+        return False
+    if sel['mu_type'] :
+        if not (entry.Muon_isGlobal[j] or entry.Muon_isTracker[j]) : 
+            if printOn:
+                printCut(entry.event, lepTypes, 'm', j, "muType global/tracker", "{},{}".format(entry.Muon_isGlobal[j], entry.Muon_isTracker[j]))
+            return False
+    if abs(entry.Muon_dxy[j]) > sel['mu_dxy'] :
+        if printOn:
+            printCut(entry.event, lepTypes, 'm', j, "dxy", entry.Muon_dxy[j])
+        return False
+    if abs(entry.Muon_dz[j]) > sel['mu_dz'] :
+        if printOn:
+            printCut(entry.event, lepTypes, 'm', j, "dz", entry.Muon_dz[j])
+        return False
+    #if it passed all the cuts, it's good!
+    return True
+
+#True if the specified tauon is valid, otherwise false.
+def goodTau_4tau(lepTypes, entry, j, printOn=False) :
+    
+    sel = selections[lepTypes] # selections for H->tau(h)+tau(h)
+    # apply tau(h) selections 
+    if entry.Tau_pt[j] < sel['tau_pt']: 
+        if printOn: 
+            printCut(entry.event, lepTypes, 't', j, "pt", entry.Tau_pt[j])
+        return False
+    if abs(entry.Tau_eta[j]) > sel['tau_eta']: 
+        if printOn: 
+            printCut(entry.event, lepTypes, 't', j, "eta", entry.Tau_eta[j])
+        return False
+    if abs(entry.Tau_dz[j]) > sel['tau_dz']: 
+        if printOn: 
+            printCut(entry.event, lepTypes, 't', j, "dz", entry.Tau_dz[j])
+        return False
+    if not entry.Tau_idDecayModeNewDMs[j]: 
+        if printOn: 
+            printCut(entry.event, lepTypes, 't', j, "idDecayModeNewDMs", entry.Tau_idDecayModeNewDMs[j])
+        return False
+    if  entry.Tau_decayMode[j] == 5 or entry.Tau_decayMode[j] == 6 : 
+        if printOn: 
+            printCut(entry.event, lepTypes, 't', j, "decayMode", entry.Tau_decayMode[j])
+        return False
+#    if abs(entry.Tau_charge[j]) != 1: 
+#        if printOn: 
+#            printCut(entry.event, lepTypes, 't', j, "charge", entry.Tau_decayMode[j]))
+#        return False
+    if sel['tau_vJet'] > 0  and not ord(entry.Tau_idDeepTau2017v2p1VSjet[j]) & sel['tau_vJet'] > 0 :
+        if printOn : 
+            printCut(entry.event, lepTypes, 't', j, "vJetIDDeepTau", ord(entry.Tau_idDeepTau2017v2p1VSjet[j]))
+        return False
+    if sel['tau_vEle'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSe[j]) :
+        if printOn : 
+            printCut(entry.event, lepTypes, 't', j, "vEleIDDeepTau", ord(entry.Tau_idDeepTau2017v2p1VSe[j]))
+        return False
+    if sel['tau_vMu'] > 0 and not ord(entry.Tau_idDeepTau2017v2p1VSmu[j]) :
+        if printOn : 
+            printCut(entry.event, lepTypes, 't', j, "vMuIDDeepTau", ord(entry.Tau_idDeepTau2017v2p1VSmu[j]))
+        return False
+
+    return True
 # select an electron for the Z candidate
 def goodElectron(entry, j) :
     """ tauFun.goodElectron(): select good electrons 
@@ -1105,12 +1465,40 @@ def goodElectron(entry, j) :
 
     return True 
 
-def makeGoodElectronList(entry) :
+#hijacked for 4tau purposes.
+def getGoodElectronList(lepTypes, entry, printOn=False) :
     goodElectronList = []
     for i in range(entry.nElectron) :
-        if goodElectron(entry, i) : goodElectronList.append(i)
+        #if goodElectron(entry, i) : 
+        if goodElectron_4tau(lepTypes, entry, i, printOn) : 
+            goodElectronList.append(i)
     return goodElectronList
 
+#for 4tau analysis, return the 2 lists (one for each flavor of particle in lepTypes).
+def getGoodLists(lepTypes, entry, printOn=False):
+    lists = [[], []]
+    for i in range(2):
+        #if they're the same flavor, no need to waste more time
+        if i == 1 and lepTypes[0] == lepTypes[1]:
+            lists[1] = lists[0]
+            break
+        if lepTypes[i] == 'e':
+            for j in range(entry.nElectron):
+                if goodElectron_4tau(lepTypes, entry, j, printOn):
+                    lists[i].append(j)    
+        elif lepTypes[i] == 'm':
+            for j in range(entry.nMuon):
+                if goodMuon_4tau(lepTypes, entry, j, printOn):
+                    lists[i].append(j)
+        elif lepTypes[i] == 't':
+            for j in range(entry.nTau):
+                if goodTau_4tau(lepTypes, entry, j, printOn):
+                    lists[i].append(j)
+        else:
+            print("Error: unknown particle type {}".format(lepTypes[i]))
+            return [],[]
+
+    return lists[0], lists[1]
 
 ##############
 def goodMuonExtraLepton(entry, j):
@@ -1436,6 +1824,31 @@ def findLeadMuMu(goodMuonList, entry) :
 
     return pairList, selpair
 
+
+#find highest pT tau pair (which is valid)
+def findLeadTauTau(goodTauList, entry, printOn=False) :
+        
+    #list (length 2) of best tau pair. (channel is not used other than to ensure it is a tttt process)
+    bestTaus = getBestTauPairPt('tttt', entry, goodTauList)
+    
+    if len(bestTaus) < 2:
+        return [],[]
+    if printOn:
+        print("findLeadTauTau: \ngoodTaulist={}\nBest tau pair: {}".format(goodTauList, bestTaus))
+    
+    maxt = bestTaus[0]
+    submaxt = bestTaus[1]
+    #get their 4-momenta.
+    tau1 = TLorentzVector() #leading muon
+    tau2 = TLorentzVector() #subleading muon
+    tau1.SetPtEtaPhiM(entry.Tau_pt[maxt],entry.Tau_eta[maxt],entry.Tau_phi[maxt],1.777)
+    tau2.SetPtEtaPhiM(entry.Tau_pt[submaxt],entry.Tau_eta[submaxt],entry.Tau_phi[submaxt],1.777)
+
+    pairList = [tau1,tau2]
+    selpair = bestTaus
+
+    return pairList, selpair
+
 def findZ(goodElectronList, goodMuonList, entry) :
     mm = selections['mm'] # H->tau(mu)+tau(h) selections
     selpair,pairList, mZ, bestDiff = [],[], 91.19, 99999. 
@@ -1541,11 +1954,11 @@ def findZee(goodElectronList, entry) :
     return pairList
 
 def catToNumber(cat) :
-    number = { 'eeet':1, 'eemt':2, 'eett':3, 'eeem':4, 'mmet':5, 'mmmt':6, 'mmtt':7, 'mmem':8, 'et':9, 'mt':10, 'tt':11, 'tttt':12 }
+    number = { 'eeet':1, 'eemt':2, 'eett':3, 'eeem':4, 'mmet':5, 'mmmt':6, 'mmtt':7, 'mmem':8, 'et':9, 'mt':10, 'tt':11, 'tttt':12, 'ttmt':13, 'ttet':14, 'ttem':15, 'mtmt':16, 'mtet':17, 'mtem':18, 'etet':19, 'etem':20, 'emem':21, 'mmmt':22, 'mmet':23, 'mmem':24, 'mmtt':25, 'eemt':26, 'eeet':27, 'eeem':28, 'eett':29 }
     return number[cat]
 
 def numberToCat(number) :
-    cat = { 1:'eeet', 2:'eemt', 3:'eett', 4:'eeem', 5:'mmet', 6:'mmmt', 7:'mmtt', 8:'mmem', 9:'et', 10:'mt', 11:'tt', 12:'tttt' }
+    cat = { 1:'eeet', 2:'eemt', 3:'eett', 4:'eeem', 5:'mmet', 6:'mmmt', 7:'mmtt', 8:'mmem', 9:'et', 10:'mt', 11:'tt', 12:'tttt', 13:'ttmt', 14:'ttet', 15:'ttem', 16:'mtmt', 17:'mtet', 18:'mtem', 19:'etet', 20:'etem', 21:'emem', 22:'mmmt', 23:'mmet', 24:'mmem', 25:'mmtt', 26:'eemt', 27:'eeet', 28:'eeem', 29:'eett' }
     return cat[number]
     
 
