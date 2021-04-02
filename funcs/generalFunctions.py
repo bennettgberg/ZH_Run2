@@ -144,11 +144,8 @@ def printEvent(entry) :
 
     if True and entry.nTau > 0:
         print("Taus                                    |-Deep Tau-||-------Iso------|")
-<<<<<<< HEAD
-        print(" #    Pt   Eta   Phi   Mode ID   DMID    vJ  vM  vE  Raw   Chg   Neu  jetIdx antiEl antiMu  dxy     dz  idMVA   rawIso  MC  Q")
-=======
-        print(" #    Pt   Eta   Phi   Mode ID   DMID    vJ  vM  vE  Raw   Chg   Neu  jetIdx antiEl antiMu  dxy     dz  idMVA   rawIso  MC, genMatch")
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
+        print(" #    Pt   Eta   Phi   Mode ID   DMID    vJ  vM  vE  Raw   Chg   Neu  jetIdx antiEl antiMu  dxy     dz  idMVA   rawIso  MC  Q genmatch")
+#        print(" #    Pt   Eta   Phi   Mode ID   DMID    vJ  vM  vE  Raw   Chg   Neu  jetIdx antiEl antiMu  dxy     dz  idMVA   rawIso  MC, genMatch")
         for j in range(entry.nTau) :
             tauSign = "+"
             if entry.Tau_charge[j] < 0: tauSign = "-"
@@ -159,12 +156,10 @@ def printEvent(entry) :
                 entry.Tau_jetIdx[j],ord(entry.Tau_idAntiEle[j]),ord(entry.Tau_idAntiMu[j]),
                 entry.Tau_dxy[j],entry.Tau_dz[j],ord(entry.Tau_idMVAoldDM2017v2[j]),entry.Tau_rawMVAoldDM2017v2[j],
                 getMCmatchString(entry.Tau_eta[j],entry.Tau_phi[j],entry)[0:6],
-<<<<<<< HEAD
                 ord(entry.Tau_idDeepTau2017v2p1VSjet[j]),ord(entry.Tau_idDeepTau2017v2p1VSmu[j]),ord(entry.Tau_idDeepTau2017v2p1VSe[j]),
-                tauSign))
-=======
-                ord(entry.Tau_idDeepTau2017v2p1VSjet[j]),ord(entry.Tau_idDeepTau2017v2p1VSmu[j]),ord(entry.Tau_idDeepTau2017v2p1VSe[j]))), ord(entry.Tau_genPartFlav[j])
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
+                tauSign, ord(entry.Tau_genPartFlav[j]) ))
+
+                #ord(entry.Tau_idDeepTau2017v2p1VSjet[j]),ord(entry.Tau_idDeepTau2017v2p1VSmu[j]),ord(entry.Tau_idDeepTau2017v2p1VSe[j]))), ord(entry.Tau_genPartFlav[j])
 
     if True and entry.nTrigObj > 0 :
         trigID = { 11:"Electr", 22:"Photon", 13:"  Muon",15:"   Tau", 1:"   Jet", 6:"FatJet", 2:"   MET", 3:"    HT" , 4:"   MHT" }
@@ -256,163 +251,23 @@ def getMCmatchString(eta, phi, entry) :
     if jBest == 999 : return '*'
     return '**'
 
-<<<<<<< HEAD
 #addiitonal mmmt and mmme final states for HAA ... can't tag the Z
-=======
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
 def findTripleLeptTrigger(goodLeptonList,entry,flavour,era):
     LepttrigList =[]
     nLepton = len(goodLeptonList)
     hltList = []
-<<<<<<< HEAD
-=======
     hltListSubL = []
     hltListSubSubL = []
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
     leadL = -1
     subleadL = -1
     subsubleadL = -1
 
-<<<<<<< HEAD
-=======
     tripleLep = False
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
     doubleLep = False
     singleLep1 = False
     singleLep2 = False
     isLfired = False
     issubLfired = False
-<<<<<<< HEAD
-    
-
-    #if 'ee' in flavour and nLepton > 2 :
-    #    if era == '2016' and not entry.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ : return LepttrigList, hltList
-    #    if era != '2016'  and not entry.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ and not entry.HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL  :  return LepttrigList, hltList
-    # 
-    #    
-    #    if entry.Electron_pt[goodLeptonList[0]] > entry.Electron_pt[goodLeptonList[1]]: 
-    #        leadL = goodLeptonList[0]
-    #        subleadL = goodLeptonList[1]
-	#    if entry.Electron_pt[goodLeptonList[0]] < 25 or entry.Electron_pt[goodLeptonList[1]] < 14 : return LepttrigList, hltList
-    #    else : 
-    #        leadL = goodLeptonList[1]
-    #        subleadL = goodLeptonList[0]
-	#    if entry.Electron_pt[goodLeptonList[1]] < 25 or entry.Electron_pt[goodLeptonList[0]] < 14 : return LepttrigList, hltList
-
-    #if flavour == 'ee' :print 'pT ', entry.Electron_pt[leadL], entry.Electron_pt[subleadL], leadL, subleadL
-
-    #Add 3 cases with 12, 10 and 5 GeV in order of muon pt or offline 
-   
-    #if  'mm' in flavour and nLepton < 2 : return LepttrigList, hltList 
-    if  'mm' in flavour and nLepton > 2 :
-        if era == '2016' and not entry.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ and not entry.HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ : return LepttrigList, hltList
-        if era != '2016'  and not entry.HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8:  return LepttrigList, hltList
-
-        if (entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[1]]) and (entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[2]]): 
-            leadL = goodLeptonList[0]
-            subleadL = goodLeptonList[1]
-            subsubleadL = goodLeptonList[2]
-            if (entry.Muon_pt[goodLeptonList[0]] < 19) or (entry.Muon_pt[goodLeptonList[1]] < 10 ) or (entry.Muon_pt[goodLeptonList[2]] < 7 ): return LepttrigList, hltList
-
-        if (entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[2]]) and (entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[1]]): 
-            leadL = goodLeptonList[0]
-            subleadL = goodLeptonList[2]
-            subsubleadL = goodLeptonList[1]
-            #if entry.Muon_pt[goodLeptonList[1]] < 19 or entry.Muon_pt[goodLeptonList[0]] < 10 : return LepttrigList, hltList
-            if (entry.Muon_pt[goodLeptonList[0]] < 19) or (entry.Muon_pt[goodLeptonList[2]] < 10 ) or (entry.Muon_pt[goodLeptonList[1]] < 7 ): return LepttrigList, hltList
-
-        if (entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[0]]) and (entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[2]]): 
-            leadL = goodLeptonList[1]
-            subleadL = goodLeptonList[0]
-            subsubleadL = goodLeptonList[2]
-            #if entry.Muon_pt[goodLeptonList[1]] < 19 or entry.Muon_pt[goodLeptonList[0]] < 10 : return lepttriglist, hltlist
-            if (entry.Muon_pt[goodLeptonList[1]] < 19) or (entry.Muon_pt[goodLeptonList[0]] < 10 ) or (entry.Muon_pt[goodLeptonList[2]] < 7 ): return lepttriglist, hltlist
-
-        if (entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[2]]) and (entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[0]]): 
-            leadL = goodLeptonList[1]
-            subleadL = goodLeptonList[2]
-            subsubleadL = goodLeptonList[0]
-            #if entry.Muon_pt[goodLeptonList[1]] < 19 or entry.Muon_pt[goodLeptonList[0]] < 10 : return lepttriglist, hltlist
-            if (entry.Muon_pt[goodLeptonList[1]] < 19) or (entry.Muon_pt[goodLeptonList[2]] < 10 ) or (entry.Muon_pt[goodLeptonList[0]] < 7 ): return lepttriglist, hltlist
-
-        if (entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[1]]) and (entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[0]]): 
-            leadL = goodLeptonList[2]
-            subleadL = goodLeptonList[1]
-            subsubleadL = goodLeptonList[0]
-            #if entry.Muon_pt[goodLeptonList[1]] < 19 or entry.Muon_pt[goodLeptonList[0]] < 10 : return LepttrigList, hltList
-            if (entry.Muon_pt[goodLeptonList[2]] < 19) or (entry.Muon_pt[goodLeptonList[1]] < 10 ) or (entry.Muon_pt[goodLeptonList[0]] < 7 ): return LepttrigList, hltList
-
-        if (entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[0]]) and (entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[1]]): 
-            leadL = goodLeptonList[2]
-            subleadL = goodLeptonList[0]
-            subsubleadL = goodLeptonList[1]
-            #if entry.Muon_pt[goodLeptonList[1]] < 19 or entry.Muon_pt[goodLeptonList[0]] < 10 : return LepttrigList, hltList
-            if (entry.Muon_pt[goodLeptonList[2]] < 19) or (entry.Muon_pt[goodLeptonList[0]] < 10 ) or (entry.Muon_pt[goodLeptonList[1]] < 7 ): return LepttrigList, hltList
-
-
-    #print "leptons ",leadL,subleadL,subsubleadL
-    #for 2017, 2018 according to nAOD documentation  qualityBitsDoc = cms.string("1 = TrkIsoVVL, 2 = Iso, 4 = OverlapFilter PFTau, 8 = 1mu, 16 = 2mu, 32 = 1mu-1e, 64 = 1mu-1tau, 128 = 3mu, 256 = 2mu-1e, 512 =1mu-2e"),
-    ## for 2016 in particular  "1 = TrkIsoVVL, 2 = Iso, 4 = OverlapFilter PFTau, 8 = IsoTkMu"
-    dR=100.
-    dRr=100.
-    i_lead = -1
-    i_trail = -1
-    i_trailtrail = -1
-    if nLepton>2:
-        for iobj in range(0,entry.nTrigObj) :
-            if 'ee' in flavour and abs(entry.TrigObj_id[iobj]) == 11 : 
-                dR = DRobj(entry.Electron_eta[leadL],entry.Electron_phi[leadL], entry.TrigObj_eta[iobj], entry.TrigObj_phi[iobj])
-                if dR  < 0.5 and entry.TrigObj_filterBits[iobj] & 16 : 
-                    hltList.append("LeadTEle")
-                    i_lead = iobj
-
-
-                for iobjj in range(iobj,entry.nTrigObj) :
-                    dRr = DRobj(entry.Electron_eta[subleadL],entry.Electron_phi[subleadL], entry.TrigObj_eta[iobjj], entry.TrigObj_phi[iobjj])
-                    if dRr  < 0.5 and entry.TrigObj_filterBits[iobjj] & 16 : 
-                        hltList.append("TrailTEle")
-                        i_trail = iobjj
-
-                    if i_lead != i_trail and i_lead != -1 and i_trail != -1 : break
-
-
-            #Watch the trigger bits!!!!
-            if 'mm' in flavour and abs(entry.TrigObj_id[iobj]) == 13 : 
-                #print "lead lepton   ",leadL,"   the trig object", entry.TrigObj_eta[iobj],"   the number of muons  ",len(entry.Muon_pt)
-                dR = DRobj(entry.Muon_eta[leadL],entry.Muon_phi[leadL], entry.TrigObj_eta[iobj], entry.TrigObj_phi[iobj])
-                #print "dR ",dR,"   triggerfilterbits  ",entry.TrigObj_filterBits[iobj]
-                #if dR  < 0.5 and entry.TrigObj_filterBits[iobj] & 16 : 
-                if dR  < 0.5: 
-                    hltList.append("LeadTMu")
-                    #print "found leading muon and trigger at",iobj
-                    i_lead = iobj
-
-
-                for iobjj in range(iobj,entry.nTrigObj) :
-                    dRr = DRobj(entry.Muon_eta[subleadL],entry.Muon_phi[subleadL], entry.TrigObj_eta[iobjj], entry.TrigObj_phi[iobjj])
-                    if dRr  < 0.5: 
-                        hltList.append("TrailTMu")
-                        i_trail = iobjj
-                    if i_lead != i_trail and i_lead != i_trailtrail and i_trail != i_trailtrail and i_lead != -1 and i_trail != -1 and i_trailtrail !=-1: break
-
-                for iobjk in range(iobj,entry.nTrigObj) :
-                    dRr = DRobj(entry.Muon_eta[subsubleadL],entry.Muon_phi[subsubleadL], entry.TrigObj_eta[iobjk], entry.TrigObj_phi[iobjk])
-                    if dRr  < 0.5: 
-                        hltList.append("TrailTrailTMu")
-                        i_trail = iobjk
-
-                #if i_lead != i_trail and i_lead != -1 and i_trail != -1 : break
-                    if i_lead != i_trail and i_lead != i_trailtrail and i_trail != i_trailtrail and i_lead != -1 and i_trail != -1 and i_trailtrail !=-1: break
-
-
-                #if 'ee' in flavour  : print '=============', dR, dRr, i_trail, i_lead, hltList
-                #if i_lead != i_trail and i_lead != -1 and i_trail != -1  : 
-    #if i_lead != i_trail and i_lead != i_trailtrail and i_trail != i_trailtrail and i_lead != -1 and i_trail != -1 and i_trailtrail !=-1:
-    LepttrigList.append(leadL)
-    LepttrigList.append(subleadL)
-    LepttrigList.append(subsubleadL)
-    hltList.append('TriLept')
-=======
     issubsubLfired = False
     print "length of muon list ",nLepton
     if  'mm' in flavour and nLepton > 2 :
@@ -503,7 +358,6 @@ def findTripleLeptTrigger(goodLeptonList,entry,flavour,era):
             LepttrigList.append(subsubleadL)
             print "found all leptons for trimuon trigger "
             hltList.append('TriLept')
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
 
     return LepttrigList, hltList
 
@@ -1023,13 +877,8 @@ class pileUpWeight() :
 
     def __init__(self):
         self.dummy = 0
-<<<<<<< HEAD
-        
-    def calculateWeights(self,nickName,year,csv) :
-=======
 
     def calculateWeights(self,nickName,year) :
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
         # get data pileup histogram
         fData = TFile('data_pileup_{0:d}.root'.format(year))
         hData = fData.Get('pileup')
@@ -1042,13 +891,6 @@ class pileUpWeight() :
         lumi = { 2016:35.9, 2017:41.5, 2018:59.7 }
         xSec = 1.
         # get MC cross section values
-<<<<<<< HEAD
-        #for line in open('MCsamples_{0:d}.csv'.format(year),'r').readlines() :
-        for line in open(csv,'r').readlines() :
-            if nickName == line.split(',')[0].strip() :
-                xSec = 1000.*float(line.split(',')[2])
-                 
-=======
         #for line in open('MCsamples.csv','r').readlines() :
         #for line in open('MCsamples_{0:d}_v7.csv'.format(year),'r').readlines() :
         #    if nickName == line.split(',')[0].strip() :
@@ -1068,7 +910,6 @@ class pileUpWeight() :
                 xSec = float(value1+value2)
             else : xSec = float(str(vals[2]))
 
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
         # get MC pileup histograms
         MCfile = "MC_{0:d}_nAODv7.root".format(year)
         print("Opening MC pileup file = {0:s}".format(MCfile))
