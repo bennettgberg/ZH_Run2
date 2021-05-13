@@ -1957,12 +1957,12 @@ def findZee(goodElectronList, entry) :
 
 
 def catToNumber(cat) :
-    number = { 'eeet':1, 'eemt':2, 'eett':3, 'eeem':4, 'mmet':5, 'mmmt':6, 'mmtt':7, 'mmem':8, 'et':9, 'mt':10, 'tt':11, 'tttt':12, 'ttmt':13, 'ttet':14, 'ttem':15, 'mtmt':16, 'mtet':17, 'mtem':18, 'etet':19, 'etem':20, 'emem':21, 'mmmt':22, 'mmet':23, 'mmem':24, 'mmtt':25, 'eemt':26, 'eeet':27, 'eeem':28, 'eett':29 }
+    number = { 'eeet':1, 'eemt':2, 'eett':3, 'eeem':4, 'mmet':5, 'mmmt':6, 'mmtt':7, 'mmem':8, 'et':9, 'mt':10, 'tt':11, 'tttt':12, 'ttmt':13, 'ttet':14, 'ttem':15, 'mtmt':16, 'mtet':17, 'mtem':18, 'etet':19, 'etem':20, 'emem':21 }
     return number[cat]
 
 
 def numberToCat(number) :
-    cat = { 1:'eeet', 2:'eemt', 3:'eett', 4:'eeem', 5:'mmet', 6:'mmmt', 7:'mmtt', 8:'mmem', 9:'et', 10:'mt', 11:'tt', 12:'tttt', 13:'ttmt', 14:'ttet', 15:'ttem', 16:'mtmt', 17:'mtet', 18:'mtem', 19:'etet', 20:'etem', 21:'emem', 22:'mmmt', 23:'mmet', 24:'mmem', 25:'mmtt', 26:'eemt', 27:'eeet', 28:'eeem', 29:'eett' }
+    cat = { 1:'eeet', 2:'eemt', 3:'eett', 4:'eeem', 5:'mmet', 6:'mmmt', 7:'mmtt', 8:'mmem', 9:'et', 10:'mt', 11:'tt', 12:'tttt', 13:'ttmt', 14:'ttet', 15:'ttem', 16:'mtmt', 17:'mtet', 18:'mtem', 19:'etet', 20:'etem', 21:'emem' }
     return cat[number]
 
 def catToNumber3L(cat) :

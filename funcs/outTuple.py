@@ -197,6 +197,15 @@ class outTuple() :
         self.ip3d_3       = array('f',[0])
 
         self.idDecayModeNewDMs_3 = array('f',[0])
+
+        self.idDeepTau2017v2p1VSe_1 = array('f',[0])
+        self.idDeepTau2017v2p1VSjet_1 = array('f',[0])
+        self.idDeepTau2017v2p1VSmu_1 = array('f',[0])
+
+        self.idDeepTau2017v2p1VSe_2 = array('f',[0])
+        self.idDeepTau2017v2p1VSjet_2 = array('f',[0])
+        self.idDeepTau2017v2p1VSmu_2 = array('f',[0])
+
         self.idDeepTau2017v2p1VSe_3 = array('f',[0])
         self.idDeepTau2017v2p1VSjet_3 = array('f',[0])
         self.idDeepTau2017v2p1VSmu_3 = array('f',[0])
@@ -486,9 +495,19 @@ class outTuple() :
 
 
         self.t.Branch('idDecayModeNewDMs_3', self.idDecayModeNewDMs_3, 'idDecayModeNewDMs_3/F')
+
+        self.t.Branch('idDeepTau2017v2p1VSe_1', self.idDeepTau2017v2p1VSe_1, 'idDeepTau2017v2p1VSe_1/F')
+        self.t.Branch('idDeepTau2017v2p1VSjet_1', self.idDeepTau2017v2p1VSjet_1, 'idDeepTau2017v2p1VSjet_1/F')
+        self.t.Branch('idDeepTau2017v2p1VSmu_1', self.idDeepTau2017v2p1VSmu_1, 'idDeepTau2017v2p1VSmu_1/F')
+
+        self.t.Branch('idDeepTau2017v2p1VSe_2', self.idDeepTau2017v2p1VSe_2, 'idDeepTau2017v2p1VSe_2/F')
+        self.t.Branch('idDeepTau2017v2p1VSjet_2', self.idDeepTau2017v2p1VSjet_2, 'idDeepTau2017v2p1VSjet_2/F')
+        self.t.Branch('idDeepTau2017v2p1VSmu_2', self.idDeepTau2017v2p1VSmu_2, 'idDeepTau2017v2p1VSmu_2/F')
+
         self.t.Branch('idDeepTau2017v2p1VSe_3', self.idDeepTau2017v2p1VSe_3, 'idDeepTau2017v2p1VSe_3/F')
         self.t.Branch('idDeepTau2017v2p1VSjet_3', self.idDeepTau2017v2p1VSjet_3, 'idDeepTau2017v2p1VSjet_3/F')
         self.t.Branch('idDeepTau2017v2p1VSmu_3', self.idDeepTau2017v2p1VSmu_3, 'idDeepTau2017v2p1VSmu_3/F')
+
         self.t.Branch('idMVAnewDM2017v2_3', self.idMVAnewDM2017v2_3, 'idMVAnewDM2017v2_3/F')
         self.t.Branch('rawMVAnewDM2017v2_3', self.rawMVAnewDM2017v2_3, 'rawMVAnewDM2017v2_3/F')
 
@@ -722,17 +741,17 @@ class outTuple() :
 
         #self.t.SetBranchStatus("*Up",0)
         #self.t.SetBranchStatus("*Down",0)
-        self.t.SetBranchStatus("GenPart*",0)
-        self.t.SetBranchStatus("*_tr*",0)
-        self.t.SetBranchStatus("*LHE*",0)
-        #self.t.SetBranchStatus("*LHEScaleWeight",1)
-        self.t.SetBranchStatus("dR*",0)
-        self.t.SetBranchStatus("dPhi*",0)
-        self.t.SetBranchStatus("Z_*",0)
-        self.t.SetBranchStatus("*ip3d*",0)
-        self.t.SetBranchStatus("nbtagT",0)
-        self.t.SetBranchStatus("*Up*",0)
-        self.t.SetBranchStatus("*Down*",0)
+#        self.t.SetBranchStatus("GenPart*",0)
+#        self.t.SetBranchStatus("*_tr*",0)
+#        self.t.SetBranchStatus("*LHE*",0)
+#        #self.t.SetBranchStatus("*LHEScaleWeight",1)
+#        self.t.SetBranchStatus("dR*",0)
+#        self.t.SetBranchStatus("dPhi*",0)
+#        self.t.SetBranchStatus("Z_*",0)
+#        self.t.SetBranchStatus("*ip3d*",0)
+#        self.t.SetBranchStatus("nbtagT",0)
+#        self.t.SetBranchStatus("*Up*",0)
+#        self.t.SetBranchStatus("*Down*",0)
         #self.t.SetBranchStatus("Smear",0)
         for i, isyst in enumerate(shift) :
             self.tN.append(isyst)
@@ -977,15 +996,15 @@ class outTuple() :
             hltListLepSubL  = []
             hltListLepSubSubL  = []
 
-            TrigListLep, hltListLep, hltListLepSubL  = GF.findSingleLeptTrigger(lepList, entry, channel_ll, era)
-            TrigListLep = list(dict.fromkeys(TrigListLep))
+            #TrigListLep, hltListLep, hltListLepSubL  = GF.findSingleLeptTrigger(lepList, entry, channel_ll, era)
+            #TrigListLep = list(dict.fromkeys(TrigListLep))
             #if len(hltListLep) > 0 or len(hltListLepSubL)>0 :     print GF.printEvent(entry), SystIndex
 
             #TrigListLepD, hltListLepD  = GF.findDoubleLeptTrigger(lepList, entry, channel_ll, era)
             #TrigListLepD = list(dict.fromkeys(TrigListLepD))
 
-            TrigListLepT, hltListLepT = GF.findTripleLeptTrigger(fullLepList, entry, channel_ll, era)
-            TrigListLepT = list(dict.fromkeys(TrigListLepT))
+            #TrigListLepT, hltListLepT = GF.findTripleLeptTrigger(fullLepList, entry, channel_ll, era)
+            #TrigListLepT = list(dict.fromkeys(TrigListLepT))
 
             #if len(TrigListLepD) > 0 : print TrigListLepD, hltListLepD, TrigListLep, hltListLep
             #if len(TrigListLepD) == 2 :
@@ -993,30 +1012,30 @@ class outTuple() :
             #        is_Dtrig_1 = 1 #that means that the leading lepton
             #    else :
             #        is_Dtrig_1 = -1
-            if len(hltListLep) > 0 and  len(hltListLepSubL) == 0 :
-                is_trig_1 = 1
-            if len(hltListLep) == 0 and len(hltListLepSubL) > 0 :
-                is_trig_1 = -1
-            if len(hltListLep) > 0 and len(hltListLepSubL)>0 :
-                is_trig_1 = 2
-            self.whichTriggerWord[0]=0
-            self.whichTriggerWordSubL[0]=0
-            print "hltListLepT ",hltListLepT
-            if "TriLept" in hltListLepT:
-                print "found triple muon event"
-                self.isTripleTrig[0] = 1
-            else:
-                self.isTripleTrig[0] = 0
-
-            #if len(TrigListLep) >0 : print 'TrigerList ===========>', TrigListLep, lepList, hltListLep, channel_ll, 'istrig_1', is_trig_1, 'istrig_2', is_trig_2, 'lenTrigList', len(TrigListLep),  'lenLept', len(lepList), 'lepList_0', lepList[0], 'TrigList_0', TrigListLep[0], hltListLep
-
-            for i,bit in enumerate(hltListLep):
-                if bit :
-                    self.whichTriggerWord[0] += 2**i
-
-            for j,bitt in enumerate(hltListLepSubL):
-                if bitt : self.whichTriggerWordSubL[0] += 2**j
-
+#            if len(hltListLep) > 0 and  len(hltListLepSubL) == 0 :
+#                is_trig_1 = 1
+#            if len(hltListLep) == 0 and len(hltListLepSubL) > 0 :
+#                is_trig_1 = -1
+#            if len(hltListLep) > 0 and len(hltListLepSubL)>0 :
+#                is_trig_1 = 2
+#            self.whichTriggerWord[0]=0
+#            self.whichTriggerWordSubL[0]=0
+#            print "hltListLepT ",hltListLepT
+#            if "TriLept" in hltListLepT:
+#                print "found triple muon event"
+#                self.isTripleTrig[0] = 1
+#            else:
+#                self.isTripleTrig[0] = 0
+#
+#            #if len(TrigListLep) >0 : print 'TrigerList ===========>', TrigListLep, lepList, hltListLep, channel_ll, 'istrig_1', is_trig_1, 'istrig_2', is_trig_2, 'lenTrigList', len(TrigListLep),  'lenLept', len(lepList), 'lepList_0', lepList[0], 'TrigList_0', TrigListLep[0], hltListLep
+#
+#            for i,bit in enumerate(hltListLep):
+#                if bit :
+#                    self.whichTriggerWord[0] += 2**i
+#
+#            for j,bitt in enumerate(hltListLepSubL):
+#                if bitt : self.whichTriggerWordSubL[0] += 2**j
+#
 
             #if channel_ll=='ee' and entry.luminosityBlock==90 and entry.event==8904: print self.whichTriggerWord[0], 'hlt', hltListLep, 'hltsub', hltListLepSubL
             #print cat, self.whichTriggerWord
@@ -1062,9 +1081,19 @@ class outTuple() :
 
             self.decayMode_3[0]        = -1
             self.idDecayModeNewDMs_3[0]= -1
+
+            self.idDeepTau2017v2p1VSe_1[0] = -1
+            self.idDeepTau2017v2p1VSjet_1[0] = -1
+            self.idDeepTau2017v2p1VSmu_1[0] = -1
+
+            self.idDeepTau2017v2p1VSe_2[0] = -1
+            self.idDeepTau2017v2p1VSjet_2[0] = -1
+            self.idDeepTau2017v2p1VSmu_2[0] = -1
+
             self.idDeepTau2017v2p1VSe_3[0] = -1
             self.idDeepTau2017v2p1VSjet_3[0] = -1
             self.idDeepTau2017v2p1VSmu_3[0] = -1
+
             self.idMVAnewDM2017v2_3[0] = -1
             self.rawMVAnewDM2017v2_3[0] = -1
             self.mediumId_3[0]       = -1
@@ -1108,7 +1137,9 @@ class outTuple() :
                 self.Generator_weight[0] = entry.Generator_weight
                 self.LHE_Njets[0]        = ord(entry.LHE_Njets)
                 if SystIndex == 0 :
-                    for i in range(0, int(entry.nLHEScaleWeight)) :
+#                    print("nLHEScaleWeight: {}".format(int(entry.nLHEScaleWeight)))
+                    for i in range(0, min(9, int(entry.nLHEScaleWeight))) :
+#                        print("i={}, scaleWeight={}".format(i, entry.LHEScaleWeight[i]))
                         self.LHEScaleWeights[i] = entry.LHEScaleWeight[i]
 
                 self.nPU[0]  = entry.Pileup_nPU
@@ -1235,7 +1266,8 @@ class outTuple() :
                 self.iso_3[0]  = entry.Electron_pfRelIso03_all[jt1]
                 self.Electron_mvaFall17V2noIso_WP90_3[0]  = entry.Electron_mvaFall17V2noIso_WP90[jt1]
 
-                if SystIndex ==0 and  isMC:
+                #bpg had to add ePt !=[] qualifier...??
+                if SystIndex ==0 and  isMC and not ePt == []:
                     self.pt_uncor_3[0] = ePt[jt1]
                     self.m_uncor_3[0] = eMass[jt1]
                     self.pt_uncor_4[0] = tPt[jt2]
@@ -1278,7 +1310,8 @@ class outTuple() :
                 self.iso_3[0]  = entry.Electron_pfRelIso03_all[jt1]
                 self.Electron_mvaFall17V2noIso_WP90_3[0]  = entry.Electron_mvaFall17V2noIso_WP90[jt1]
 
-                if SystIndex ==0 and  isMC:
+                #bpg had to add ePt qualifier...???
+                if SystIndex ==0 and  isMC and not ePt == []:
                     self.pt_uncor_3[0] = ePt[jt1]
                     self.m_uncor_3[0] = eMass[jt1]
                     self.pt_uncor_4[0] = mPt[jt2]
@@ -1355,7 +1388,8 @@ class outTuple() :
                 self.isGlobal_3[0]      = entry.Muon_isGlobal[jt1]
                 self.isTracker_3[0]     = entry.Muon_isTracker[jt1]
                 self.ip3d_3[0]       = entry.Muon_ip3d[jt1]
-                if SystIndex ==0 and isMC :
+        #bpg added mPt
+                if SystIndex ==0 and isMC and not mPt == [] :
                     self.pt_uncor_3[0] = mPt[jt1]
                     self.m_uncor_3[0] = mMass[jt1]
                     self.pt_uncor_4[0] = tPt[jt2]
@@ -1392,7 +1426,8 @@ class outTuple() :
                 self.q_3[0]      = entry.Tau_charge[jt1]
                 self.d0_3[0]     = entry.Tau_dxy[jt1]
                 self.dZ_3[0]     = entry.Tau_dz[jt1]
-                if SystIndex ==0 and isMC:
+        #bpg
+                if SystIndex ==0 and isMC and not tPt == []:
                     self.pt_uncor_3[0] = tPt[jt1]
                     self.m_uncor_3[0] = tMass[jt1]
                     self.pt_uncor_4[0] = tPt[jt2]
@@ -1538,10 +1573,12 @@ class outTuple() :
         lep_index_1 = lepList[0]
         lep_index_2 = lepList[1]
 
-        if (LepP.Pt() < LepM.Pt()):
-            lep_index_1 = lepList[1]
-            lep_index_2 = lepList[0]
+    #Unnecessary--made sure of this in previous functions and sometimes causes crash!!!
+      #  if (LepP.Pt() < LepM.Pt()):
+      #      lep_index_1 = lepList[1]
+      #      lep_index_2 = lepList[0]
         #relIso
+        lt1 = ''
         if channel_ll == 'ee' :
 
             self.iso_1[0]  = entry.Electron_pfRelIso03_all[lep_index_1]
@@ -1554,7 +1591,8 @@ class outTuple() :
             self.dZ_2[0]   = entry.Electron_dz[lep_index_2]
             self.Electron_mvaFall17V2noIso_WP90_1[0]  = entry.Electron_mvaFall17V2noIso_WP90[lep_index_1]
             self.Electron_mvaFall17V2noIso_WP90_2[0]  = entry.Electron_mvaFall17V2noIso_WP90[lep_index_2]
-            if SystIndex ==0 and  isMC :
+            #bpg ePt qual
+            if SystIndex ==0 and  isMC and not ePt == []:
                 self.pt_uncor_1[0] = ePt[lep_index_1]
                 self.m_uncor_1[0] = eMass[lep_index_1]
                 self.pt_uncor_2[0] = ePt[lep_index_2]
@@ -1565,7 +1603,7 @@ class outTuple() :
                 self.gen_match_2[0] = ord(entry.Electron_genPartFlav[lep_index_2])
 
 
-        if channel_ll == 'mm' :
+        elif channel_ll == 'mm' :
             self.iso_1[0]  = entry.Muon_pfRelIso04_all[lep_index_1]
             self.iso_2[0]  = entry.Muon_pfRelIso04_all[lep_index_2]
             self.q_1[0]  = entry.Muon_charge[lep_index_1]
@@ -1586,7 +1624,8 @@ class outTuple() :
             self.isGlobal_2[0]   = entry.Muon_isGlobal[lep_index_2]
             self.isTracker_1[0]   = entry.Muon_isTracker[lep_index_1]
             self.isTracker_2[0]   = entry.Muon_isTracker[lep_index_2]
-            if SystIndex ==0 and isMC:
+    #bpg added mPt
+            if SystIndex ==0 and isMC and not mPt == []:
                 self.pt_uncor_1[0] = mPt[lep_index_1]
                 self.m_uncor_1[0] = mMass[lep_index_1]
                 self.pt_uncor_2[0] = mPt[lep_index_2]
@@ -1594,7 +1633,98 @@ class outTuple() :
             if isMC :
                 self.gen_match_1[0] = ord(entry.Muon_genPartFlav[lep_index_1])
                 self.gen_match_2[0] = ord(entry.Muon_genPartFlav[lep_index_2])
+        
+#4tau categories!
+        else:
+                #how to find Tau iso?? (prolly not really needed)
+         #   self.iso_1[0]  = entry.Muon_pfRelIso04_all[lep_index_1]
+         #   self.iso_2[0]  = entry.Muon_pfRelIso04_all[lep_index_2]
+        #first lepton of the channel
+            lt1 = channel_ll[0]
+            #print("Filling lt1={}!!".format(lt1))
+            if lt1 == 't':
+                self.q_1[0]  = entry.Tau_charge[lep_index_1]
+                self.d0_1[0]   = entry.Tau_dxy[lep_index_1]
+                self.dZ_1[0]   = entry.Tau_dz[lep_index_1]
+                if isMC :
+                    self.gen_match_1[0] = ord(entry.Tau_genPartFlav[lep_index_1]) 
+                #set deepTau variables
 
+                #print("deepTauVjet = {}".format(ord(entry.Tau_idDeepTau2017v2p1VSjet[lep_index_1])))
+
+                self.idDeepTau2017v2p1VSjet_1[0] = ord(entry.Tau_idDeepTau2017v2p1VSjet[lep_index_1])
+                #print("Now deepTauboi: {}".format(self.idDeepTau2017v2p1VSjet_1[0]))
+                self.idDeepTau2017v2p1VSe_1[0] = ord(entry.Tau_idDeepTau2017v2p1VSe[lep_index_1])
+                self.idDeepTau2017v2p1VSmu_1[0] = ord(entry.Tau_idDeepTau2017v2p1VSmu[lep_index_1])
+            elif lt1 == 'm':
+                self.iso_1[0]  = entry.Muon_pfRelIso04_all[lep_index_1]
+                self.q_1[0]  = entry.Muon_charge[lep_index_1]
+                self.d0_1[0]   = entry.Muon_dxy[lep_index_1]
+                self.dZ_1[0]   = entry.Muon_dz[lep_index_1]
+                self.looseId_1[0]   = entry.Muon_looseId[lep_index_1]
+                self.tightId_1[0]      = entry.Muon_tightId[lep_index_1]
+                self.mediumId_1[0]   = entry.Muon_mediumId[lep_index_1]
+                self.mediumPromptId_1[0]   = entry.Muon_mediumPromptId[lep_index_1]
+                self.isGlobal_1[0]   = entry.Muon_isGlobal[lep_index_1]
+                self.isTracker_1[0]   = entry.Muon_isTracker[lep_index_1]
+                if isMC :
+                    self.gen_match_1[0] = ord(entry.Muon_genPartFlav[lep_index_1])
+                if SystIndex ==0 and isMC and not mPt == []:
+                    self.pt_uncor_1[0] = mPt[lep_index_1]
+                    self.m_uncor_1[0] = mMass[lep_index_1]
+            elif lt1 == 'e':
+                self.iso_1[0]  = entry.Electron_pfRelIso03_all[lep_index_1]
+                self.q_1[0]  = entry.Electron_charge[lep_index_1]
+                self.d0_1[0]   = entry.Electron_dxy[lep_index_1]
+                self.dZ_1[0]   = entry.Electron_dz[lep_index_1]
+                self.Electron_mvaFall17V2noIso_WP90_1[0]  = entry.Electron_mvaFall17V2noIso_WP90[lep_index_1]
+                if isMC :
+                    self.gen_match_1[0] = ord(entry.Electron_genPartFlav[lep_index_1])
+                if SystIndex ==0 and isMC and not ePt == []:
+                    self.pt_uncor_1[0] = ePt[lep_index_1]
+                    self.m_uncor_1[0] = eMass[lep_index_1]
+            else:
+                print("Error! lt1 = {}, channel_ll={}, cat={}".format(lt1, channel_ll, cat))
+                sys.exit()
+
+        #second lepton of the channel
+            lt2 = channel_ll[1]
+            if lt2 == 't':
+                self.q_2[0]  = entry.Tau_charge[lep_index_2]
+                self.d0_2[0]   = entry.Tau_dxy[lep_index_2]
+                self.dZ_2[0]   = entry.Tau_dz[lep_index_2]
+                if isMC :
+                    self.gen_match_2[0] = ord(entry.Tau_genPartFlav[lep_index_2])
+                self.idDeepTau2017v2p1VSjet_2[0] = ord(entry.Tau_idDeepTau2017v2p1VSjet[lep_index_2])
+                self.idDeepTau2017v2p1VSe_2[0] = ord(entry.Tau_idDeepTau2017v2p1VSe[lep_index_2])
+                self.idDeepTau2017v2p1VSmu_2[0] = ord(entry.Tau_idDeepTau2017v2p1VSmu[lep_index_2])
+            elif lt2 == 'm':
+                self.iso_2[0]  = entry.Muon_pfRelIso04_all[lep_index_2]
+                self.q_2[0]  = entry.Muon_charge[lep_index_2]
+                self.d0_2[0]   = entry.Muon_dxy[lep_index_2]
+                self.dZ_2[0]   = entry.Muon_dz[lep_index_2]
+                self.looseId_2[0]   = entry.Muon_looseId[lep_index_2]
+                self.tightId_2[0]      = entry.Muon_tightId[lep_index_2]
+                self.mediumId_2[0]   = entry.Muon_mediumId[lep_index_2]
+                self.mediumPromptId_2[0]   = entry.Muon_mediumPromptId[lep_index_2]
+                self.isGlobal_2[0]   = entry.Muon_isGlobal[lep_index_2]
+                self.isTracker_2[0]   = entry.Muon_isTracker[lep_index_2]
+                if isMC :
+                    self.gen_match_2[0] = ord(entry.Muon_genPartFlav[lep_index_2])
+                if SystIndex ==0 and isMC and not mPt == []:
+                    self.pt_uncor_2[0] = mPt[lep_index_2]
+                    self.m_uncor_2[0] = mMass[lep_index_2]
+            elif lt2 == 'e':
+                self.iso_2[0]  = entry.Electron_pfRelIso03_all[lep_index_2]
+                self.q_2[0]  = entry.Electron_charge[lep_index_2]
+                self.d0_2[0]   = entry.Electron_dxy[lep_index_2]
+                self.dZ_2[0]   = entry.Electron_dz[lep_index_2]
+                self.Electron_mvaFall17V2noIso_WP90_2[0]  = entry.Electron_mvaFall17V2noIso_WP90[lep_index_2]
+                if isMC :
+                    self.gen_match_2[0] = ord(entry.Electron_genPartFlav[lep_index_2])
+                if SystIndex ==0 and isMC and not ePt == []:
+                    self.pt_uncor_2[0] = ePt[lep_index_2]
+                    self.m_uncor_2[0] = eMass[lep_index_2]
 
         # genMatch the di-lepton variables
         if isMC :
@@ -1635,7 +1765,9 @@ class outTuple() :
         #print 'inside after filling----------------------->', entry.MET_pt,  self.met[0], met_pt
         #self.puppimet[0]    = entry.PuppiMET_pt
         #self.puppimetphi[0] = entry.PuppiMET_phi
-
+#        if lt1 == 't':
+#        
+#            print("Now 2 deepTauboi: {}".format(self.idDeepTau2017v2p1VSjet_1[0]))
 
         if isMC :
             self.HTXS_Higgs_cat[0]         = entry.HTXS_stage1_1_cat_pTjet30GeV
@@ -1665,13 +1797,13 @@ class outTuple() :
         else :
             if not doUncertainties :
                 if str(era) != '2017' :
-                    self.met[0]= entry.met_pt
-                    self.metphi[0]= entry.met_phi
+                    self.met[0]= met_pt # entry.met_pt
+                    self.metphi[0]= met_phi #entry.met_phi
                 if str(era) == '2017' :
                     #self.met[0]= entry.METFixEE2017_pt
                     #self.metphi[0]= entry.METFixEE2017_phi
-                    self.met[0]= entry.met_pt
-                    self.metphi[0]= entry.met_phi
+                    self.met[0]= met_pt #entry.met_pt
+                    self.metphi[0]= met_phi #entry.met_phi
             if  doUncertainties :
 
                 if str(era) != '2017' :
@@ -1818,11 +1950,12 @@ class outTuple() :
         self.njets[0] = len(jetList)
         self.nbtag[0] = len(bJetList)
         self.nbtagT[0] = len(bJetList)
-        for ifl in range(len(jetListPt)) :
+        #bpg added min to avoid oob error
+        for ifl in range(min(15, len(jetListPt))) :
+        #todo: fix error on next line.
             self.jflavour[ifl]  = jetListFlav[ifl]
             self.jeta[ifl]  = jetListEta[ifl]
             self.jpt[ifl]  = jetListPt[ifl]
-
 
         '''
             if len(jetList) > 0 :
@@ -2261,7 +2394,7 @@ class outTuple() :
                 
                 # Fill variables for Leg3 and Leg4, where 3->tau(had) and 4->tau(had)
                 elif channel == 'tt' :
-                    print("channel = {}, jt1= {}.".format(channel, jt1))
+                    #print("channel = {}, jt1= {}.".format(channel, jt1))
                     GF.printEvent(entry)
                     self.pt_3[0]     = entry.Tau_pt[jt1]
                     self.phi_3[0]    = entry.Tau_phi[jt1]
@@ -3374,7 +3507,6 @@ class outTuple() :
 #        if self.isTrig_1 !=0 : self.t.Fill()
 #        #self.t.Fill()
 #        return
-=======
 
             goodElectronList = tauFun2.makeGoodElectronList(entry)
             goodMuonList = tauFun2.makeGoodMuonList(entry)
@@ -3861,7 +3993,6 @@ class outTuple() :
         if SystIndex == 0 and ( self.isTrig_1 !=0 or  self.isTrig_2 !=0) :
             self.t.Fill()
         return
->>>>>>> 467d3cbe5778782faebe455d2d50661a0a64d0d2
 
 
     def setWeight(self,weight) :

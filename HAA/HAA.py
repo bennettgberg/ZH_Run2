@@ -51,8 +51,9 @@ maxPrint = args.maxPrint
 cutCounter = {}
 cutCounterGenWeight = {}
 
-#9 cats (no mm, ee pairs--dwarfed by ZZ->4l bkg, and no tttt--too few events, would cost too much extra time and effort.)
-cats = ['ttmt', 'ttet', 'ttem', 'mtmt', 'mtet', 'mtem', 'etet', 'etem', 'emem'] #, 'mmmt', 'mmet', 'mmem', 'mmtt', 'eemt', 'eeet', 'eeem', 'eett'] #['mmet','mmmt','mmtt','mmem','tttt']
+#13 cats (no ee pairs--dwarfed by ZZ->4l bkg, and no tttt--too few events, would cost too much extra time and effort.)
+cats = ['ttmt', 'ttet', 'ttem', 'mtmt', 'mtet', 'mtem', 'etet', 'etem', 'emem', 'mmmt', 'mmet', 'mmem', 'mmtt']
+#cats = ['mmmt', 'mmet', 'mmem', 'mmtt'] #, 'eemt', 'eeet', 'eeem', 'eett', 'tttt']
 
 doJME  = args.doSystematics.lower() == 'true' or args.doSystematics.lower() == 'yes' or args.doSystematics == '1'
 
@@ -415,7 +416,7 @@ for count, e in enumerate(inTree) :
         #    if len(bestTauPair) > 3 :
                 jt1, jt2 = bestTauPair[0], bestTauPair[1]
                 #print("jt1={}, jt2={}".format(jt1, jt2))
-               # print("Valid 4tau event! channel {}, particle numbers {}, {}, {}, {}".format(cat, lepList[0], lepList[1], jt1, jt2)) 
+                #print("Valid 4tau event! channel {}, particle numbers {}, {}, {}, {}".format(cat, lepList[0], lepList[1], jt1, jt2)) 
                 #print "evt ",e.event," best pair pt sum",e.Muon_pt[bestTauPair[0]] + e.Tau_pt[bestTauPair[1]]
                 #if bestTauPair has 4 entries then we're in the tttt channel.
             #    if len(bestTauPair) > 3:

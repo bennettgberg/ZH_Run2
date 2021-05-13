@@ -53,8 +53,8 @@ class Weights() :
             self.weights_tauTotauES = {'DM0' :-0.9, 'DM1' : -0.1, 'DM10' : 0.3, 'DM11' : -0.2}
             self.weights_elTotauES = {'DM0' :-0.5, 'DM1' : 6, 'DM10' : 0, 'DM11' :0}
             self.weights_muTotauES = {'DM0' :0., 'DM1' : -0.5, 'DM10' : 0, 'DM11' :0}
-            self.TESSF={'dir' : '../TauPOG/TauIDSFs/data/', 'fileTES' : 'TauES_eta-dm_DeepTau2017v2p1VSe_2016Legacy.root'}
-            self.FESSF={'dir' : '../TauPOG/TauIDSFs/data/', 'fileFES' : 'TauFES_eta-dm_DeepTau2017v2p1VSe_2016Legacy.root'}
+            self.TESSF={'dir' : 'TauPOG/TauIDSFs/data/', 'fileTES' : 'TauES_eta-dm_DeepTau2017v2p1VSe_2016Legacy.root'}
+            self.FESSF={'dir' : 'TauPOG/TauIDSFs/data/', 'fileFES' : 'TauFES_eta-dm_DeepTau2017v2p1VSe_2016Legacy.root'}
 
 
         if year == 2017 :
@@ -66,8 +66,8 @@ class Weights() :
             self.weights_tauTotauES = {'DM0' :0.4, 'DM1' : 0.2, 'DM10' : 0.1, 'DM11' : -1.3}
             self.weights_elTotauES = {'DM0' :0.3, 'DM1' : 3.6, 'DM10' : 0, 'DM11' :0}
             self.weights_muTotauES = {'DM0' :-0.2, 'DM1' : -0.8, 'DM10' : 0, 'DM11' :0}  ##that was different from Cecile
-            self.TESSF={'dir' : '../TauPOG/TauIDSFs/data/', 'fileTES' : 'TauES_dm_DeepTau2017v2p1VSjet_2017ReReco.root'}
-            self.FESSF={'dir' : '../TauPOG/TauIDSFs/data/', 'fileFES' : 'TauFES_eta-dm_DeepTau2017v2p1VSjet_2017ReReco.root'}
+            self.TESSF={'dir' : 'TauPOG/TauIDSFs/data/', 'fileTES' : 'TauES_dm_DeepTau2017v2p1VSjet_2017ReReco.root'}
+            self.FESSF={'dir' : 'TauPOG/TauIDSFs/data/', 'fileFES' : 'TauFES_eta-dm_DeepTau2017v2p1VSjet_2017ReReco.root'}
 
         if year == 2018 :
 
@@ -77,8 +77,8 @@ class Weights() :
             self.weights_tauTotauES = {'DM0' :-1.6, 'DM1' : -0.4, 'DM10' : -1.2, 'DM11' : -0.4}
             self.weights_elTotauES = {'DM0' :-3.2, 'DM1' : 2.6, 'DM10' : 0, 'DM11' :0}
             self.weights_muTotauES = {'DM0' :-0.2, 'DM1' : -1., 'DM10' : 0, 'DM11' :0}
-            self.TESSF={'dir' : '../TauPOG/TauIDSFs/data/', 'fileTES' : 'TauES_dm_DeepTau2017v2p1VSjet_2018ReReco.root'}
-            self.FESSF={'dir' : '../TauPOG/TauIDSFs/data/', 'fileFES' : 'TauFES_eta-dm_DeepTau2017v2p1VSe_2018ReReco.root'}
+            self.TESSF={'dir' : 'TauPOG/TauIDSFs/data/', 'fileTES' : 'TauES_dm_DeepTau2017v2p1VSjet_2018ReReco.root'}
+            self.FESSF={'dir' : 'TauPOG/TauIDSFs/data/', 'fileFES' : 'TauFES_eta-dm_DeepTau2017v2p1VSe_2018ReReco.root'}
 
 
         '''
