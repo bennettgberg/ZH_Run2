@@ -328,7 +328,7 @@ for count, e in enumerate(inTree) :
     #    if e.nMuon < 2 : continue 
         #if e.nTau < 4: continue
         #only require 2 taus because the other 2 could decay leptonically.
-        if e.nTau < 2: continue
+    #    if e.nTau < 2: continue    #do I really want this???????? don't think so.
         #for cat in cats[4:] : 
         for cat in cats : 
             cutCounter[cat].count('LeptonCount')
@@ -380,14 +380,17 @@ for count, e in enumerate(inTree) :
             debug = False
             #first run getBestPair to try to get the lead pair.
             #pairList should be list (length 2) of TLorentzVector objects corresponding to the 2 leptons in the pair
-            #lepList should be list (length 2) of lepton numbers.
-            lepTypes = cat[:2]
+            #lepList should be list (length 4 (not just 2)) of lepton numbers.
+            lepTypes = cat #[:2]
             #print("HAA cat={}, lepTypes = {}".format(cat, lepTypes))
             #need one list for each of the particles in the channel
             goodlists = [[], [], [], []]
-            goodlists[0], goodlists[1] = tauFun2.getGoodLists(lepTypes, e, printOn)
+           # goodlists[0], goodlists[1] = tauFun2.getGoodLists(lepTypes, e, printOn)
+            # getGoodLists should return a list of 4 lists--one for each lepType.
+            goodlists = tauFun2.getGoodLists(lepTypes, e, printOn)
             #pairList, lepList = tauFun_4tau.getBestPair(lepTypes, e, goodElectronList, goodMuonList, goodTauList)
-            pairList, lepList = tauFun2.getBestPair(lepTypes, e, goodlists[0], goodlists[1])
+            #getBestPairs should return pairList,lepList for pair corresponding to cat[:2], and bestTauPair for cat[2:]
+            pairList, lepList, bestTauPair = tauFun2.getBestPairs(lepTypes, e, goodlists) #goodlists[0], goodlists[1])
             if pairList == []:
                 if debug and count < 100:
                     print("no lepton pair cut!")
@@ -402,9 +405,9 @@ for count, e in enumerate(inTree) :
 
             #now run getBestPair again to get the subleading pair.
             #bestTauPair = tauFun_4tau.getBestPair(cat[2:], e, goodElectronList, goodMuonList, goodTauList, pairList)
-            lepTypes = cat[2:]
-            goodlists[2], goodlists[3] = tauFun2.getGoodLists(lepTypes, e, printOn)
-            bestTauPair = tauFun2.getBestPair(lepTypes, e, goodlists[2], goodlists[3], pairList)
+#            lepTypes = cat[2:]
+#            goodlists[2], goodlists[3] = tauFun2.getGoodLists(lepTypes, e, printOn)
+#            bestTauPair = tauFun2.getBestPair(lepTypes, e, goodlists[2], goodlists[3], pairList)
             if len(bestTauPair) < 2: 
                 continue
             #count cuts that were made in getting the Best tau pair(s)
@@ -416,7 +419,7 @@ for count, e in enumerate(inTree) :
         #    if len(bestTauPair) > 3 :
                 jt1, jt2 = bestTauPair[0], bestTauPair[1]
                 #print("jt1={}, jt2={}".format(jt1, jt2))
-                #print("Valid 4tau event! channel {}, particle numbers {}, {}, {}, {}".format(cat, lepList[0], lepList[1], jt1, jt2)) 
+                print("Valid 4tau event! channel {}, particle numbers {}, {}, {}, {}".format(cat, lepList[0], lepList[1], jt1, jt2)) 
                 #print "evt ",e.event," best pair pt sum",e.Muon_pt[bestTauPair[0]] + e.Tau_pt[bestTauPair[1]]
                 #if bestTauPair has 4 entries then we're in the tttt channel.
             #    if len(bestTauPair) > 3:

@@ -5,7 +5,7 @@
 import io
 import yaml
 import subprocess
-from ROOT import TLorentzVector
+from ROOT import TLorentzVector,TFile
 from math import sqrt, sin, cos, pi
 from itertools import combinations
 import os
@@ -423,6 +423,19 @@ def comparePairPt(entry,pair1,pair2, lepTypes='tt'):
 #    return False
     return (ptsums[1] > ptsums[0])
 
+#return the full lepton name based on just the letter.
+def lepname(letter): 
+    if letter == 'e':
+        lname = "Electron"
+    elif letter == 'm':
+        lname = "Muon"
+    elif letter == 't':
+        lname = "Tau"
+    else:
+        print("Error! unrecognized lepton letter %s"%(letter))
+        sys.exit()
+    return lname
+
 #return dR between 2 particles with eta/phi coords (eta0,phi0) and (eta1,phi1).
 def pair_dR(eta0, phi0, eta1, phi1):
     deta = eta1 - eta0
@@ -431,64 +444,48 @@ def pair_dR(eta0, phi0, eta1, phi1):
     dphi = min(dphi, 2*pi - dphi)
     return (deta**2 + dphi**2)**0.5
 
+#find the dR between two particles of lepton types lt, event ev, particle numbers n0, n1.
+def find_dR(lt, ev, n0, n1):
+    etas = [0., 0.]
+    phis = [0., 0.]
+    #fill etas and phis for each of the two particles.
+    for i in range(2):
+        c = n0 if i==0 else n1
+        #lepton name
+        lname = lepname(lt[i])
+        exec("etas[i] = ev.%s_eta[c]"%(lname))
+        exec("phis[i] = ev.%s_phi[c]"%(lname))
+    #now calculate DR
+    dr = pair_dR(etas[0], phis[0], etas[1], phis[1])
+
+    return dr
+
+    
 #function to return a list of all valid pairs of valid particles
 #lepTypes: 2-char string of lepton types of each list (eg: ee, em, tt, mt,...)
 #list0,list1: list of all numbers (corresponding to the entry and the lepton type)
-def getAllPairs(lepTypes, entry, list0, list1, pairList):
+def getAllPairs(lepTypes, entry, list0, list1):
 #    print("getAllPairs lepTypes: {}".format(lepTypes))
     #mm and ee selections should instead use the mt/et selections for distance.
     ll = lepTypes
     if ll[0] == ll[1]:
         ll = '{}{}'.format(ll[0], 't')
+
+    #minimum dr between particles
+    dr_cut = selections[ll]['lt_DR']
+
     all_pairs = []
-    etas = [0., 0.]
-    phis = [0., 0.]
     for a in list0:
-        useA = True #will be False if found not good for use (too close to leading pair).
         for b in list1:
-            useB = True #will be False if b is found not good for use (too close to one of the leading pair taus).
-            #fill etas and phis for each of the two particles.
-            for i in range(2):
-                if i == 0:
-                    c = a
-                else:
-                    c = b
-                if lepTypes[i] == 't':
-                    etas[i] = entry.Tau_eta[c]
-                    phis[i] = entry.Tau_phi[c]
-                elif lepTypes[i] == 'm':
-                  #  print("c = {}, i = {}, list0={}, list1={}".format(c, i, str(list0), str(list1)))
-                  #  GF.printEvent(entry)
-                    etas[i] = entry.Muon_eta[c]
-                    phis[i] = entry.Muon_phi[c]
-                elif lepTypes[i] == 'e':
-                    etas[i] = entry.Electron_eta[c]
-                    phis[i] = entry.Electron_phi[c]
-            dr_cut = selections[ll]['lt_DR']
-            #be sure we are not too close the lead tau pair.
-    #        print("a={}, b={}, lead eta0={}, lead phi0={}, lead eta1={}, lead phi1={}".format(a, b, pairList[0].Eta(), pairList[0].Phi(), pairList[1].Eta(), pairList[1].Phi()))
-            for i in range(2):
-                #will skip if pairList is empty.
-                for l in pairList:
-                    dr = pair_dR(etas[i], phis[i], l.Eta(), l.Phi()) 
-                  #  print("a={}, b={}, i={}, l={}, dr={}".format(a, b, i, l, dr))
-                    if dr < dr_cut:
-                        if i == 0: 
-                            useA = False
-                        else:
-                            useB = False
-                        break
-                #no need to go through the next iteration if we're already not using this pairing.
-                if not useA or not useB: break
-            if not useA: break
-            if not useB: continue
-#            print("a={}, b={} passed pairList cut.".format(a,b))
-            #now calculate DR
-            dr = pair_dR(etas[0], phis[0], etas[1], phis[1])
+            #don't repeat twice for same lep type, eg [0,1] and [1,0]
+            if lepTypes[0] == lepTypes[1] and b <= a:
+                continue
+            #find the dR between these two particles.
+            dr = find_dR(lepTypes, entry, a, b)
             #determine if dr is sufficient
             if dr < dr_cut:
                 continue
-#            if sufficient, append to all_pairs.
+            #if sufficient, append to all_pairs.
             all_pairs.append([a,b])
 
     return all_pairs
@@ -500,6 +497,47 @@ def bubble1(lepTypes, entry, items):
     for i in range(len(items)-1,0,-1) :
         #corrected 2020/07/20
         if not comparePairPt(entry, items[i], items[i-1], lepTypes) : 
+            items[i-1], items[i] = items[i], items[i-1] 
+    return items
+
+#compare scalar pt sum of 2 different pairs-of-pairs of particles.
+# if equal, compare pt of first pair (of the pair of pairs)
+def comparePair2(entry, pair1, pair2, lepTypes):
+    # a return value of True means that pair2 is "better" than pair 1 
+    #"better" meaning has higher scalar pt sum of the 4 particles!
+    pair2s = [pair1, pair2]
+    #full (4-particle) pt sums
+    ptsums = [0.0, 0.0]
+    #pt sums of only the first 2 particles (eg tt for ttmt)
+    pairpts = [0.0, 0.0]
+    #for each of the 2 pair2s
+    for ii in range(2):
+        #for each of the 2 pairs in the pair of pairs
+        for jj in range(2):
+            #for each of the 2 members of the pair
+            for kk in range(2):
+                #get correct lepton type.
+                lname = lepname(lepTypes[2*jj+kk])
+                #add the correct amount of pt to the correct place.
+                exec("add_pt = entry.%s_pt[pair2s[ii][jj][kk]]"%(lname))
+                ptsums[ii] += add_pt
+                if jj == 0:
+                    pairpts[ii] += add_pt
+
+    if ptsums[1] > ptsums[0]:
+        return True
+    if ptsums[1] < ptsums[0]:
+        return False
+    #if equal, compare only the first pair.
+    return (pairpts[1] > pairpts[0])
+
+#partially sort list 'items' so that only the first item is in the right place.
+def bubble2(lepTypes, entry, items):
+    # Sort the list of pairs-of-pairs using a bubble sort
+    # The list is not fully sorted, since only the top pair-of-pairing is needed
+    for i in range(len(items)-1,0,-1) :
+        #corrected 2020/07/20
+        if not comparePair2(entry, items[i], items[i-1], lepTypes) : 
             items[i-1], items[i] = items[i], items[i-1] 
     return items
 
@@ -572,7 +610,7 @@ def getBestPair(lepTypes, entry, list0, list1, pairList=[]) :
     elif debug:
         print("All pairs: {}".format(str(all_pairs)))
     #sort these pairs enough to get the very best one.
-    all_pairs = bubble1(ll, entry, all_pairs)
+   # all_pairs = bubble1(ll, entry, all_pairs)
     
     #if tt channel, make sure the highest pT tau comes first.
     if ll[0] == ll[1]:
@@ -597,6 +635,108 @@ def getBestPair(lepTypes, entry, list0, list1, pairList=[]) :
             vecs.append( get4vec(ll[i], entry, all_pairs[0][i]) )
         return vecs, all_pairs[0] 
     return all_pairs[0]
+
+#return pairlist0 \cross pairlist1 (restricted to not overlap in dr)
+def getAllPair2s(leps, ev, pairlist0, pairlist1):
+    pair2s = []
+    
+    #lepTypes to use just for getting the dR value
+    # (use 2nd two bc mm is the only channel with no lt_dR cut in the yaml.)
+    ll = leps[2:]
+    #minimum dr between particles
+    dr_cut = selections[ll]['lt_DR']
+
+    #go through every possible pairing of the pairs
+    for ii,pl0 in enumerate(pairlist0):
+        for jj,pl1 in enumerate(pairlist1):
+            #good unless any particles too close
+            goodPair2 = True
+            #form the pair2
+            #check every combo of particles for dr spacing
+            for aa,a in enumerate(pl0):
+                if not goodPair2:
+                    break
+                for bb,b in enumerate(pl1):
+                    #lep types of the particles
+                    lt0 = leps[aa]
+                    lt1 = leps[2 + bb]
+                    #string concatenation
+                    lt = lt0 + lt1
+                    
+                    #find the dR between a and b.
+                   # print("leps={}, ii={},pl0={}, jj={},pl1={}, aa={},a={}, bb={},b={}, lt0={},lt1={},lt={}".format(leps,ii,pl0,jj,pl1,aa,a,bb,b,lt0,lt1,lt))
+                    dr = find_dR(lt, ev, a, b)
+                    #determine if dr is sufficient
+                    if dr < dr_cut:
+                        goodPair2 = False
+                        break
+            if goodPair2:
+                pair2s.append([pl0, pl1])
+                        
+    return pair2s
+
+#return the best 2 pairs (depending on the channels, either tt, et, or mt, or em, or mm, or ee).
+# That is, the valid pairs with the highest scalar sum pT.
+# Inputs lists should already be 'good', ie all individual
+#  lepton cuts are already made (channel-specific pair cuts will be made here).
+def getBestPairs(lepTypes, entry, lists) :
+    debug = False
+    #types of leptons
+    ll0 = lepTypes[:2]
+    ll1 = lepTypes[2:]
+    if debug:
+        print("getBestPair ll0: {}".format(ll0))
+        print("getBestPair ll1: {}".format(ll1))
+    all_pairs_0 = getAllPairs(ll0, entry, lists[0], lists[1])
+    all_pairs_1 = getAllPairs(ll1, entry, lists[2], lists[3])
+    if debug:
+        print("all_pairs_0: {}".format(all_pairs_0))
+        print("all_pairs_1: {}".format(all_pairs_1))
+
+    #get all valid pairs of pairs (essentially just check if any particles are within dr_cut of each other).
+    all_pair2s = getAllPair2s(lepTypes, entry, all_pairs_0, all_pairs_1)
+    if debug:
+        print("all_pair2s: {}".format(all_pair2s))
+    
+    if all_pair2s == []: #len(all_pairs_0) == 0 or len(all_pairs_1) == 0:
+#        print("No valid pairs.")
+        #if no valid pairs then this category ain't it.
+        return [], [], []
+    elif debug:
+        print("All pairs: {};{}".format(all_pairs_0, all_pairs_1))
+    #ok, now find the 2 best pairs, with the restriction that particles can't be too close to each other.
+    #sort these pairs enough to get the very best one.
+    all_pair2s = bubble2(lepTypes, entry, all_pair2s)
+    if debug:
+        print("all_pair2s: {}".format(all_pair2s))
+
+    #if tt channel (or mm or ee) involved, make sure the highest pT tau comes first.
+    #for each of the 2 pairs
+    for ii in range(2):
+        jj = ii*2
+        #mm is the 2 leptons under current consideration.
+        mm = lepTypes[jj:jj+2]
+        if mm[0] == mm[1]:
+            if debug:
+                import generalFunctions as GF
+                GF.printEvent(entry)
+                print("lepTypes={}, ii={},jj={},mm={}".format(lepTypes, ii, jj, mm))
+            #array of pts for the two particles
+            pts = [0., 0.]
+            #get correct lepton type
+            lname = lepname(mm[0])
+            for kk in range(2):
+                #get the pt of the kkth particle of the iith pair of the best pair-of-pairs
+                exec("pts[kk] = entry.%s_pt[all_pair2s[0][ii][kk]]"%(lname))
+            #if 2nd particle has more pt, then swap with first particle (just to keep it nice and orderly).
+            if pts[1] > pts[0]:
+                all_pair2s[0][ii][0], all_pair2s[0][ii][1] = all_pair2s[0][ii][1], all_pairs[0][ii][0]
+
+    #for the lead tau pair, we also need a Lorentz vector. 
+    vecs = []
+    for i in range(2):
+        vecs.append( get4vec(ll0[i], entry, all_pair2s[0][0][i]) )
+    return vecs, all_pair2s[0][0], all_pair2s[0][1]
 
 def getBestTauPairPt(channel, entry, tauList) :
     """ tauFun.getBestTauPair(): return two taus that 
@@ -1370,6 +1510,8 @@ def printCut(event, lepTypes, lepType, num, cutType, val):
 #return True if the electron is good, False if it fails any cuts.
 # lepTypes is the lepton flavor for each of the two particles, ie one of 'ee', 'em', 'et'.
 def goodElectron_4tau(lepTypes, entry, j, printOn=False):
+    if 'e' not in lepTypes:
+        return False
     sel = selections[lepTypes]
     #if lepTypes is 'ee', we actually need to use the 'et' selections instead
     # (since 'ee' selections are really for prompt electrons, which we're not interested in for 4tau analysis.)
@@ -1400,6 +1542,8 @@ def goodElectron_4tau(lepTypes, entry, j, printOn=False):
 #return True if the muon is good, False if it fails any cuts.
 # lepTypes is the lepton flavor for each of the two particles, ie one of 'mm', 'em', 'mt'.
 def goodMuon_4tau(lepTypes, entry, j, printOn=False):
+    if 'm' not in lepTypes:
+        return False
     sel = selections[lepTypes]
     #if lepTypes is 'ee', we actually need to use the 'et' selections instead
     # (since 'ee' selections are really for prompt electrons, which we're not interested in for 4tau analysis.)
@@ -1445,7 +1589,11 @@ def goodMuon_4tau(lepTypes, entry, j, printOn=False):
 #True if the specified tauon is valid, otherwise false.
 def goodTau_4tau(lepTypes, entry, j, printOn=False) :
     
+    if 't' not in lepTypes:
+        return False
     sel = selections[lepTypes] # selections for H->tau(h)+tau(h)
+    if printOn:
+        print("lepTypes: %s, sel: %s"%(lepTypes, sel))
     # apply tau(h) selections 
     if entry.Tau_pt[j] < sel['tau_pt']: 
         if printOn: 
@@ -1512,31 +1660,35 @@ def makeGoodElectronList(entry) :
     return goodElectronList
 
 
-#for 4tau analysis, return the 2 lists (one for each flavor of particle in lepTypes).
+#for 4tau analysis, return the 4 lists (one for each flavor of particle in lepTypes).
 def getGoodLists(lepTypes, entry, printOn=False):
-    lists = [[], []]
-    for i in range(2):
-        #if they're the same flavor, no need to waste more time
-        if i == 1 and lepTypes[0] == lepTypes[1]:
-            lists[1] = lists[0]
-            break
-        if lepTypes[i] == 'e':
-            for j in range(entry.nElectron):
-                if goodElectron_4tau(lepTypes, entry, j, printOn):
-                    lists[i].append(j)    
-        elif lepTypes[i] == 'm':
-            for j in range(entry.nMuon):
-                if goodMuon_4tau(lepTypes, entry, j, printOn):
-                    lists[i].append(j)
-        elif lepTypes[i] == 't':
-            for j in range(entry.nTau):
-                if goodTau_4tau(lepTypes, entry, j, printOn):
-                    lists[i].append(j)
-        else:
-            print("Error: unknown particle type {}".format(lepTypes[i]))
-            return [],[]
+    #one list for each of the lepton types
+    lists = [[] for i in range(4)]
+    for i in range(4):
+        #don't repeat if it's the same lepton type as one of the others.
+        ctn = False #continue or nah
+        for j in range(i-1):
+            if lepTypes[i] == lepTypes[j]:
+                lists[i] = lists[j]
+                ctn = True #continue in the outer loop
+                break
+        if ctn: continue
+        #first get the current pair
+        lt = lepTypes[:2]
+        if i > 1:
+            lt = lepTypes[2:]
+        #now get the correct lepton name.
+        lname = lepname(lepTypes[i])
+        #now get number of particles of this type
+        exec("npart = entry.n%s"%(lname))
+        #and finally form the list.
+        for j in range(npart):
+            #app will be true if we should append this particle; else false.
+            exec("app = good%s_4tau(lt, entry, j, printOn)"%(lname))
+            if app:
+                lists[i].append(j)
 
-    return lists[0], lists[1]
+    return lists #lists[0], lists[1]
 
 ##############
 def goodMuonExtraLepton(entry, j):
@@ -1993,3 +2145,35 @@ def findAMother(entry,motherType,daughter):
     else:
         return findAMother(entry,motherType,MotherIdx) #case where we need the grandma... muons that radiate gammas are two generations...
         #return None 
+
+def main():
+    #just to run a test of the functions above.
+
+    import generalFunctions as GF
+    f = TFile.Open("inFile.root")
+    t = f.Get("Events")
+
+    cat = 'ttmt'
+    print("total nevents: {}".format(t.GetEntries()))
+    for i,e in enumerate(t):
+        GF.printEvent(e)
+        glists = getGoodLists(cat, e, False)
+       # print("glists: {}".format(glists))        
+        ap0 = getAllPairs(cat[:2], e, glists[0], glists[1])
+        ap1 = getAllPairs(cat[2:], e, glists[2], glists[3])
+       # print("ap0: {}".format(ap0))
+       # print("ap1: {}".format(ap1))
+        ap2s = getAllPair2s(cat, e, ap0, ap1)
+        if ap2s != []: 
+    #        print("ap2s: {}".format(ap2s))
+            ap2s = bubble2(cat, e, ap2s)
+            print("sorted ap2s: {}".format(ap2s))
+            if len(ap2s) > 1:
+                print("more than one valid pair of pairs!! i={}".format(i))
+              #  break
+            vecs, pair0, pair1 = getBestPairs(cat, e, glists)
+            print("vecs={}, pair0={}, pair1={}".format(vecs, pair0, pair1))
+        #if i > 1000: break
+
+if __name__ == "__main__":
+    main()
