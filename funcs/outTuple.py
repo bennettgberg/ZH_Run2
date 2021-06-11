@@ -140,6 +140,10 @@ class outTuple() :
         self.LHE_Njets        = array('l',[0])
         self.electronTriggerWord  = array('l',[0])
         self.muonTriggerWord  = array('l',[0])
+        self.tauTriggerWord0 = array('l',[0])
+        self.tauTriggerWord1 = array('l',[0])
+        self.tauTriggerWord2 = array('l',[0])
+        self.tauTriggerWord3 = array('l',[0])
         self.whichTriggerWord  = array('l',[0])
         self.whichTriggerWordSubL  = array('l',[0])
         self.LHEScaleWeights        = array('f',[1]*9)
@@ -442,6 +446,10 @@ class outTuple() :
         self.t.Branch('Generator_weight', self.Generator_weight,  'Generator_weight/F' )
         self.t.Branch('electronTriggerWord',  self.electronTriggerWord, 'electronTriggerWord/I' )
         self.t.Branch('muonTriggerWord',      self.muonTriggerWord,  'muonTriggerWord/I' )
+        self.t.Branch('tauTriggerWord0',      self.tauTriggerWord0,  'tauTriggerWord0/I' )
+        self.t.Branch('tauTriggerWord1',      self.tauTriggerWord1,  'tauTriggerWord1/I' )
+        self.t.Branch('tauTriggerWord2',      self.tauTriggerWord2,  'tauTriggerWord2/I' )
+        self.t.Branch('tauTriggerWord3',      self.tauTriggerWord3,  'tauTriggerWord3/I' )
         self.t.Branch('whichTriggerWord',      self.whichTriggerWord,  'whichTriggerWord/I' )
         self.t.Branch('whichTriggerWordSubL',      self.whichTriggerWordSubL,  'whichTriggerWordSubL/I' )
 
@@ -1247,6 +1255,92 @@ class outTuple() :
             self.muonTriggerWord[0] = 0
             for i, bit in enumerate(bits) :
                 if bit : self.muonTriggerWord[0] += 2**i
+
+        #new for 4tau analysis: tau trigger word
+        #primary datasets: Tau, DoubleMuonLowMass. Also SingleMuon, which was already being used anyway.
+        #
+            #bits=[]
+            tauTrigs = ["HLT_Tau3Mu_Mu7_Mu1_TkMu1_IsoTau15",
+                        "HLT_Tau3Mu_Mu7_Mu1_TkMu1_IsoTau15_Charge1",
+                        "HLT_Tau3Mu_Mu7_Mu1_TkMu1_Tau15",
+                        "HLT_Tau3Mu_Mu7_Mu1_TkMu1_Tau15_Charge1",
+                        "HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg",
+                        "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTauHPS40_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTauHPS40_Trk1_eta2p1_Reg",
+                        "HLT_VBF_DoubleLooseChargedIsoPFTauHPS20_Trk1_eta2p1",
+                        "HLT_VBF_DoubleMediumChargedIsoPFTauHPS20_Trk1_eta2p1",
+                        "HLT_VBF_DoubleTightChargedIsoPFTauHPS20_Trk1_eta2p1",
+                        "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1",
+#word0 ^^^
+                        "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
+                        "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1",
+                        "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
+                        "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1",
+                        "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
+                        "HLT_DoubleMu3_Trk_Tau3mu",
+                        "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1",
+                        "HLT_IsoMu20_eta2p1_MediumChargedIsoPFTau27_eta2p1_CrossL1",
+                        "HLT_IsoMu20_eta2p1_TightChargedIsoPFTau27_eta2p1_CrossL1",
+                        "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_TightID_CrossL1",
+                        "HLT_IsoMu20_eta2p1_MediumChargedIsoPFTau27_eta2p1_TightID_CrossL1",
+                        "HLT_IsoMu20_eta2p1_TightChargedIsoPFTau27_eta2p1_TightID_CrossL1",
+                        "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau20_SingleL1",
+                        "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau20_SingleL1",
+                        "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau20_SingleL1",
+                        "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau20_TightID_SingleL1",
+#word1 ^^^
+                        "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau20_TightID_SingleL1",
+                        "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau20_TightID_SingleL1",
+                        "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1",
+                        "HLT_Ele24_eta2p1_WPTight_Gsf_MediumChargedIsoPFTau30_eta2p1_CrossL1",
+                        "HLT_Ele24_eta2p1_WPTight_Gsf_TightChargedIsoPFTau30_eta2p1_CrossL1",
+                        "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_TightID_CrossL1",
+                        "HLT_Ele24_eta2p1_WPTight_Gsf_MediumChargedIsoPFTau30_eta2p1_TightID_CrossL1",
+                        "HLT_Ele24_eta2p1_WPTight_Gsf_TightChargedIsoPFTau30_eta2p1_TightID_CrossL1",
+                        "HLT_DoubleLooseChargedIsoPFTau35_Trk1_eta2p1_Reg",
+                        "HLT_DoubleLooseChargedIsoPFTau40_Trk1_eta2p1_Reg",
+                        "HLT_DoubleMediumChargedIsoPFTau35_Trk1_eta2p1_Reg",
+                        "HLT_DoubleMediumChargedIsoPFTau40_Trk1_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTau35_Trk1_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg",
+                        "HLT_DoubleLooseChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleLooseChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg",
+#word2 ^^^
+                        "HLT_DoubleMediumChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg",
+                        "HLT_DoubleTightChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg" ]
+#word3 ^^^
+
+#split tauTriggerWord into 4 different words so the integers don't get too high.
+                        
+            ibits = []
+            for jj,tt in enumerate(tauTrigs):
+                #get the proper word number
+                wordnum = int(jj / 16)
+                #see if we need to reset ibits
+                if jj % 16 == 0:
+                    ibits = []
+                try: 
+                    #convert the string to the branch name.
+                    exec("ib = e.%s" % (tt))
+                    if ib: 
+                        ibits.append("1")
+                    else:
+                        ibits.append("0")
+                except AttributeError : ibits.append("0")
+                
+                #if this is the last bit of the word, form the triggerWord.
+                if jj % 16 == 15:
+                    exec("self.tauTriggerWord%d[0] = int(\"\".join(ibits), 2)"%(wordnum))        
+            
+            #convert array of binary number strings to integer
+            self.tauTriggerWord3[0] = int("".join(ibits), 2)
 
         #neede for all systematics as jt1/jt2 may change per systematic
         if jt1 > -1 and jt2 > -1 : self.cat[0]  = tauFun2.catToNumber(cat)
