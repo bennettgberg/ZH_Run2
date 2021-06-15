@@ -202,9 +202,13 @@ for i,j in enumerate(outTuple.allsystMET):
 
 Weights=Weights.Weights(args.year)
 
+#print("WARNING: using only one event!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 #The event loop
 for count, e in enumerate(inTree) :
+
+   # if not e.event == 103778079:
+   #     continue
 
     if args.maxprint2:
         GF.printMC(e)
@@ -240,7 +244,8 @@ for count, e in enumerate(inTree) :
             for cat in cats: cutCounter[cat].count('Unique') 
         else :
             continue
-    if not tauFun2.goodTrigger(e, args.year) : continue
+    #make sure event passes the trigger.
+    if not tauFun2.goodTrigger_4tau(e, args.year) : continue
     
     for cat in cats:
         cutCounter[cat].count('Trigger')
@@ -325,47 +330,11 @@ for count, e in enumerate(inTree) :
                 for i, j in enumerate (philist):
                     outTuple.list_of_arrays[i+len(metlist)][0] = philist[i]
 
-    #    if e.nMuon < 2 : continue 
-        #if e.nTau < 4: continue
-        #only require 2 taus because the other 2 could decay leptonically.
-    #    if e.nTau < 2: continue    #do I really want this???????? don't think so.
-        #for cat in cats[4:] : 
         for cat in cats : 
             cutCounter[cat].count('LeptonCount')
         if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonCount', e.genWeight)
 
 
-    #    goodElectronList = tauFun_4tau.getGoodElectronList(e)
-    #    goodMuonList = tauFun_4tau.getGoodMuonList(e)
-    #    #now get the good tauList.
-    #    goodTauList = tauFun_4tau.getGoodTauList(e)
-    #    #goodElectronList, goodMuonList = tauFun_4tau.eliminateCloseLeptons(e, goodElectronList, goodMuonList)
-    #    #pair-making code takes care of this.
-    ##    goodElectronList, goodMuonList, goodTauList = tauFun_4tau.eliminateCloseTauAndLepton(e, goodElectronList, goodMuonList, goodTauList)
-    #    #lepList=[] 
-    #    
-    ##    if len(goodMuonList) < 2 : continue
-    ##    for cat in cats[4:] :
-    #    for cat in cats :
-    #        cutCounter[cat].count('GoodLeptons')
-    #    if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
-            
-        #Muon selection algorithm 
-    #    pairList, lepList = tauFun_4tau.findLeadMuMu(goodMuonList, e)
-        #pairList,lepList = [],[]
-
-    #    if len(lepList) != 2 : continue
-        #for cat in cats[4:] : 
-
-
-    #    if not tauFun_4tau.mllCut(M) :
-    #        if unique :
-    #            print("Zmass Fail: : Event ID={0:d} cat={1:s} M={2:.2f}".format(e.event,cat,M))
-    #            #GF.printEvent(e)
-    #            #if MC : GF.printMC(e)
-    #        continue ##cut valid for both AZH and ZH
-
-    #    for cat in cats[4:]: 
         for cat in cats: 
             cutCounter[cat].count('FoundZ')
         if  MC :   cutCounterGenWeight[cat].countGenWeight('FoundZ', e.genWeight)
@@ -373,24 +342,74 @@ for count, e in enumerate(inTree) :
         #now to loop over the categories - all of them have a dimuon pair EXCEPT for tttt
         for cat in cats:
             #print full report for the first 25 events.
-            printOn = False
+            printOn = False #True
+           # if e.event == 103778079:
+           #     print("event is 103778079 !!!!!!!!")
+           #     GF.printEvent(e)
+           #     printOn = True
           #  if count < 25:
           #      printOn = True
             #just some extra printing to check that it's working correctly.
-            debug = False
-            #first run getBestPair to try to get the lead pair.
-            #pairList should be list (length 2) of TLorentzVector objects corresponding to the 2 leptons in the pair
-            #lepList should be list (length 4 (not just 2)) of lepton numbers.
+            debug = printOn
             lepTypes = cat #[:2]
             #print("HAA cat={}, lepTypes = {}".format(cat, lepTypes))
             #need one list for each of the particles in the channel
             goodlists = [[], [], [], []]
            # goodlists[0], goodlists[1] = tauFun2.getGoodLists(lepTypes, e, printOn)
             # getGoodLists should return a list of 4 lists--one for each lepType.
+            if printOn:
+                print("cat {}, event {}".format(cat, e.event))
+                GF.printEvent(e)
             goodlists = tauFun2.getGoodLists(lepTypes, e, printOn)
-            #pairList, lepList = tauFun_4tau.getBestPair(lepTypes, e, goodElectronList, goodMuonList, goodTauList)
+            
+            if goodlists[0] == [] or goodlists[1] == [] or goodlists[2] == [] or goodlists[3] == []:
+                if printOn:
+                    print("cut on GoodLeptons. goodlists: {}".format(goodlists))
+                continue
+            cutCounter[cat].count('GoodLeptons')
+            if  MC :   cutCounterGenWeight[cat].countGenWeight('GoodLeptons', e.genWeight)
+
+            #now get all valid pairs for each of the two channels.
+            debug = printOn
+            #types of leptons
+            ll0 = lepTypes[:2]
+            ll1 = lepTypes[2:]
+            if debug:
+                print("getBestPair ll0: {}".format(ll0))
+                print("getBestPair ll1: {}".format(ll1))
+            all_pairs_0 = tauFun2.getAllPairs(ll0, e, goodlists[0], goodlists[1])
+
+            if all_pairs_0 == []:
+                if printOn:
+                    print("cut on ValidPairs0.")
+                continue
+            cutCounter[cat].count('ValidPairs0')
+            if  MC :   cutCounterGenWeight[cat].countGenWeight('ValidPairs0', e.genWeight)
+            
+            all_pairs_1 = tauFun2.getAllPairs(ll1, e, goodlists[2], goodlists[3])
+            if all_pairs_1 == []:
+                if printOn:
+                    print("cut on ValidPairs1.")
+                continue
+            cutCounter[cat].count('ValidPairs1')
+            if  MC :   cutCounterGenWeight[cat].countGenWeight('ValidPairs1', e.genWeight)
+            if debug:
+                print("all_pairs_0: {}".format(all_pairs_0))
+                print("all_pairs_1: {}".format(all_pairs_1))
+
+            #get all valid pairs of pairs (essentially just check if any particles are within dr_cut of each other).
+            all_pair2s = tauFun2.getAllPair2s(lepTypes, e, all_pairs_0, all_pairs_1, debug)
+            if all_pair2s == []:
+                if printOn:
+                    print("cut on ValidPair2s.")
+                continue
+            cutCounter[cat].count('ValidPair2s')
+            if  MC :   cutCounterGenWeight[cat].countGenWeight('ValidPair2s', e.genWeight)
+            if debug:
+                print("all_pair2s: {}".format(all_pair2s))
+            
             #getBestPairs should return pairList,lepList for pair corresponding to cat[:2], and bestTauPair for cat[2:]
-            pairList, lepList, bestTauPair = tauFun2.getBestPairs(lepTypes, e, goodlists) #goodlists[0], goodlists[1])
+            pairList, lepList, bestTauPair = tauFun2.getBestPairs(lepTypes, e, all_pair2s, printOn) #goodlists[0], goodlists[1])
             if pairList == []:
                 if debug and count < 100:
                     print("no lepton pair cut!")
@@ -400,30 +419,13 @@ for count, e in enumerate(inTree) :
             LepP, LepM = pairList[0], pairList[1]
             M = (LepM + LepP).M()
 
-            cutCounter[cat].count('LeptonPair')
-            if  MC :   cutCounterGenWeight[cat].countGenWeight('LeptonPair', e.genWeight)
-
-            #now run getBestPair again to get the subleading pair.
-            #bestTauPair = tauFun_4tau.getBestPair(cat[2:], e, goodElectronList, goodMuonList, goodTauList, pairList)
-#            lepTypes = cat[2:]
-#            goodlists[2], goodlists[3] = tauFun2.getGoodLists(lepTypes, e, printOn)
-#            bestTauPair = tauFun2.getBestPair(lepTypes, e, goodlists[2], goodlists[3], pairList)
-            if len(bestTauPair) < 2: 
-                continue
-            #count cuts that were made in getting the Best tau pair(s)
-            cutCounter[cat].count('TauPairs')
-            if  MC :   cutCounterGenWeight[cat].countGenWeight('TauPairs', e.genWeight)
-
             #if we have 2 entries in the pair, then we have a good event!
             if len(bestTauPair) > 1 :
-        #    if len(bestTauPair) > 3 :
                 jt1, jt2 = bestTauPair[0], bestTauPair[1]
                 #print("jt1={}, jt2={}".format(jt1, jt2))
-                print("Valid 4tau event! channel {}, particle numbers {}, {}, {}, {}".format(cat, lepList[0], lepList[1], jt1, jt2)) 
+                if printOn:
+                    print("Valid 4tau event! channel {}, particle numbers {}, {}, {}, {}".format(cat, lepList[0], lepList[1], jt1, jt2)) 
                 #print "evt ",e.event," best pair pt sum",e.Muon_pt[bestTauPair[0]] + e.Tau_pt[bestTauPair[1]]
-                #if bestTauPair has 4 entries then we're in the tttt channel.
-            #    if len(bestTauPair) > 3:
-            #        jt3, jt4 = bestTauPair[2], bestTauPair[3]
 
                 #not done yet! figure efficiency in taus!!
                 if bestTauPair and args.genMatch:
@@ -468,10 +470,6 @@ for count, e in enumerate(inTree) :
 
             else :
                 continue
-            #print("Cutting GoodTauPair.")
-            cutCounter[cat].count("GoodTauPair")
-
-            if  MC:   cutCounterGenWeight[cat].countGenWeight('GoodTauPair', e.genWeight)
 
             if MC :
                 outTuple.setWeight(PU.getWeight(e.PV_npvs)) 
@@ -553,10 +551,11 @@ hLabels.append('inJSON')
 hLabels.append('METfilter')
 hLabels.append('Trigger')
 hLabels.append('LeptonCount')
-hLabels.append('GoodLeptons')
-hLabels.append('LeptonPair')
 hLabels.append('FoundZ')
-hLabels.append('GoodTauPair')
+hLabels.append('GoodLeptons')
+hLabels.append('ValidPairs0')
+hLabels.append('ValidPairs1')
+hLabels.append('ValidPair2s')
 
 hCutFlow=[]
 hCutFlowW=[]

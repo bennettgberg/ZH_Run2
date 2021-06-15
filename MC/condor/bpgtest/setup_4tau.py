@@ -76,10 +76,12 @@ def main():
         if my_eos:
             #get mass of the signal sample
             mass = samp_name.split('-')[-1]
-            print("command: scp %s/fileList.txt bgreenbe@lxplus.cern.ch:/eos/user/b/bgreenbe/HAA_ntuples/ggha01a01To4tau_%d_%s/"%(new_name, year, mass))
-            os.system("scp %s/fileList.txt bgreenbe@lxplus.cern.ch:/eos/user/b/bgreenbe/HAA_ntuples/ggha01a01To4tau_%d_%s/"%(new_name, year, mass))
-            #create the directory in eos for these files to be moved to
-            os.system("eos root://cmseos.fnal.gov mkdir /store/user/bgreenbe/haa_4tau_%d/signal_M-%s"%(year, mass))
+            #no need to cp the file again if it's already there.
+            if new_sample:
+                print("command: scp %s/fileList.txt bgreenbe@lxplus.cern.ch:/eos/user/b/bgreenbe/HAA_ntuples/ggha01a01To4tau_%d_%s/"%(new_name, year, mass))
+                os.system("scp %s/fileList.txt bgreenbe@lxplus.cern.ch:/eos/user/b/bgreenbe/HAA_ntuples/ggha01a01To4tau_%d_%s/"%(new_name, year, mass))
+                #create the directory in eos for these files to be moved to
+                os.system("eos root://cmseos.fnal.gov mkdir /store/user/bgreenbe/haa_4tau_%d/signal_M-%s"%(year, mass))
             #add signal sample to nAODv7
             os.system("python /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/addPUhisto.py -f /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/MC_%d_nAODv7.root -ch ZZZ -n HToAATo4Tau_M-%s"%(year, mass))
         elif new_sample:

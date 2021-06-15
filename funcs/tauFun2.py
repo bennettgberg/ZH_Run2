@@ -27,7 +27,129 @@ with io.open('cuts_HAA.yaml', 'r') as stream:
     selections = yaml.load(stream)
 print "Using selections:\n", selections
 
+#returns the list of muon trigger paths for the given year.
+def muonTriggers_4tau(year):
+    if year == 2017:
+        triggers = [
+            "HLT_IsoMu27",
+            "HLT_IsoMu24",
+            "HLT_IsoTkMu24",
+            "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
+            "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8",
+            "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8",
+            "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ",
+            "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_Mass8" ]
+    else:
+        print("Error! Trigger code for year {} not yet written.")
+        triggers = []
+        
+    return triggers
 
+#returns list of electron trigger paths for the given year.
+def electronTriggers_4tau(year):
+    if year == 2017:
+        triggers = [ "HLT_Ele35_WPTight_Gsf",
+            "HLT_Ele32_WPTight_Gsf",
+            "HLT_Ele27_eta2p1_WPTight_Gsf",
+            "HLT_Ele25_eta2p1_WPTight_Gsf",
+            "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
+            "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ" ]
+    else:
+        print("Error! Trigger code for year {} not yet written.")
+        triggers = []
+        
+    return triggers
+
+#returns list of tau trigger paths for the given year.
+def tauTriggers_4tau(year):
+    if year == 2017:
+        triggers = ["HLT_Tau3Mu_Mu7_Mu1_TkMu1_IsoTau15",
+                    "HLT_Tau3Mu_Mu7_Mu1_TkMu1_IsoTau15_Charge1",
+                    "HLT_Tau3Mu_Mu7_Mu1_TkMu1_Tau15",
+                    "HLT_Tau3Mu_Mu7_Mu1_TkMu1_Tau15_Charge1",
+                    "HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleMediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg",
+                    "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTauHPS35_Trk1_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTauHPS40_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTauHPS40_Trk1_eta2p1_Reg",
+                    "HLT_VBF_DoubleLooseChargedIsoPFTauHPS20_Trk1_eta2p1",
+                    "HLT_VBF_DoubleMediumChargedIsoPFTauHPS20_Trk1_eta2p1",
+                    "HLT_VBF_DoubleTightChargedIsoPFTauHPS20_Trk1_eta2p1",
+                    "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1",
+#word0 ^^^
+                    "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
+                    "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1",
+                    "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
+                    "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1",
+                    "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
+                    "HLT_DoubleMu3_Trk_Tau3mu",
+                    "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1",
+                    "HLT_IsoMu20_eta2p1_MediumChargedIsoPFTau27_eta2p1_CrossL1",
+                    "HLT_IsoMu20_eta2p1_TightChargedIsoPFTau27_eta2p1_CrossL1",
+                    "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_TightID_CrossL1",
+                    "HLT_IsoMu20_eta2p1_MediumChargedIsoPFTau27_eta2p1_TightID_CrossL1",
+                    "HLT_IsoMu20_eta2p1_TightChargedIsoPFTau27_eta2p1_TightID_CrossL1",
+                    "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau20_SingleL1",
+                    "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau20_SingleL1",
+                    "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau20_SingleL1",
+                    "HLT_IsoMu24_eta2p1_LooseChargedIsoPFTau20_TightID_SingleL1",
+#word1 ^^^
+                    "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau20_TightID_SingleL1",
+                    "HLT_IsoMu24_eta2p1_TightChargedIsoPFTau20_TightID_SingleL1",
+                    "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_CrossL1",
+                    "HLT_Ele24_eta2p1_WPTight_Gsf_MediumChargedIsoPFTau30_eta2p1_CrossL1",
+                    "HLT_Ele24_eta2p1_WPTight_Gsf_TightChargedIsoPFTau30_eta2p1_CrossL1",
+                    "HLT_Ele24_eta2p1_WPTight_Gsf_LooseChargedIsoPFTau30_eta2p1_TightID_CrossL1",
+                    "HLT_Ele24_eta2p1_WPTight_Gsf_MediumChargedIsoPFTau30_eta2p1_TightID_CrossL1",
+                    "HLT_Ele24_eta2p1_WPTight_Gsf_TightChargedIsoPFTau30_eta2p1_TightID_CrossL1",
+                    "HLT_DoubleLooseChargedIsoPFTau35_Trk1_eta2p1_Reg",
+                    "HLT_DoubleLooseChargedIsoPFTau40_Trk1_eta2p1_Reg",
+                    "HLT_DoubleMediumChargedIsoPFTau35_Trk1_eta2p1_Reg",
+                    "HLT_DoubleMediumChargedIsoPFTau40_Trk1_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTau35_Trk1_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTau40_Trk1_eta2p1_Reg",
+                    "HLT_DoubleLooseChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleLooseChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg",
+#word2 ^^^
+                    "HLT_DoubleMediumChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleMediumChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg",
+                    "HLT_DoubleTightChargedIsoPFTau40_Trk1_TightID_eta2p1_Reg" ]
+#word3 ^^^
+    else:
+        print("Error! Tau trigger code for year {} not yet written.")
+        triggers = []
+        
+    return triggers
+
+#returns True if e passes the trigger for year, else False (for 4tau only).
+def goodTrigger_4tau(e, year, debug=False):
+    printOn = debug
+
+    muonTrigs = muonTriggers_4tau(year)
+    electronTrigs = electronTriggers_4tau(year)
+    tauTrigs = tauTriggers_4tau(year)
+
+    goodmuon = False
+    goodelectron = False
+    goodtau = False
+    for p in ["muon", "electron", "tau"]:
+        exec("trigs = %sTrigs"%(p))
+        for t in trigs:
+            if printOn:
+                print("trigger: {}".format(t))
+            try:
+                exec("passed = e.%s"%(t))
+            except AttributeError:
+                passed = False
+            if passed:
+                exec("good%s = True"%(p))
+
+    return goodmuon or goodelectron or goodtau
+                
 
 def goodTrigger(e, year):
     trig = selections['trig']
@@ -439,9 +561,9 @@ def lepname(letter):
 #return dR between 2 particles with eta/phi coords (eta0,phi0) and (eta1,phi1).
 def pair_dR(eta0, phi0, eta1, phi1):
     deta = eta1 - eta0
-    dphi = phi1 - phi0
+    dphi = abs(phi1 - phi0)
     #phi is circular, goes from -pi to pi
-    dphi = min(dphi, 2*pi - dphi)
+    dphi = min(dphi, abs(2*pi - dphi))
     return (deta**2 + dphi**2)**0.5
 
 #find the dR between two particles of lepton types lt, event ev, particle numbers n0, n1.
@@ -637,7 +759,7 @@ def getBestPair(lepTypes, entry, list0, list1, pairList=[]) :
     return all_pairs[0]
 
 #return pairlist0 \cross pairlist1 (restricted to not overlap in dr)
-def getAllPair2s(leps, ev, pairlist0, pairlist1):
+def getAllPair2s(leps, ev, pairlist0, pairlist1,debug=False):
     pair2s = []
     
     #lepTypes to use just for getting the dR value
@@ -645,6 +767,8 @@ def getAllPair2s(leps, ev, pairlist0, pairlist1):
     ll = leps[2:]
     #minimum dr between particles
     dr_cut = selections[ll]['lt_DR']
+    if debug:
+        print("ll: {}, dr_cut: {}".format(ll, dr_cut))
 
     #go through every possible pairing of the pairs
     for ii,pl0 in enumerate(pairlist0):
@@ -666,12 +790,18 @@ def getAllPair2s(leps, ev, pairlist0, pairlist1):
                     #find the dR between a and b.
                    # print("leps={}, ii={},pl0={}, jj={},pl1={}, aa={},a={}, bb={},b={}, lt0={},lt1={},lt={}".format(leps,ii,pl0,jj,pl1,aa,a,bb,b,lt0,lt1,lt))
                     dr = find_dR(lt, ev, a, b)
+                    if debug:
+                        print("pl0={}, pl1={}, a={}, b={}, dr={}".format(pl0,pl1,a,b,dr))
                     #determine if dr is sufficient
                     if dr < dr_cut:
                         goodPair2 = False
+                        if debug:
+                            print("Bad pair2 [{},{}]".format(pl0,pl1))
                         break
             if goodPair2:
                 pair2s.append([pl0, pl1])
+                if debug:
+                    print("good pair2: [{},{}]".format(pl0,pl1))
                         
     return pair2s
 
@@ -679,34 +809,11 @@ def getAllPair2s(leps, ev, pairlist0, pairlist1):
 # That is, the valid pairs with the highest scalar sum pT.
 # Inputs lists should already be 'good', ie all individual
 #  lepton cuts are already made (channel-specific pair cuts will be made here).
-def getBestPairs(lepTypes, entry, lists) :
-    debug = False
-    #types of leptons
-    ll0 = lepTypes[:2]
-    ll1 = lepTypes[2:]
-    if debug:
-        print("getBestPair ll0: {}".format(ll0))
-        print("getBestPair ll1: {}".format(ll1))
-    all_pairs_0 = getAllPairs(ll0, entry, lists[0], lists[1])
-    all_pairs_1 = getAllPairs(ll1, entry, lists[2], lists[3])
-    if debug:
-        print("all_pairs_0: {}".format(all_pairs_0))
-        print("all_pairs_1: {}".format(all_pairs_1))
-
-    #get all valid pairs of pairs (essentially just check if any particles are within dr_cut of each other).
-    all_pair2s = getAllPair2s(lepTypes, entry, all_pairs_0, all_pairs_1)
-    if debug:
-        print("all_pair2s: {}".format(all_pair2s))
-    
-    if all_pair2s == []: #len(all_pairs_0) == 0 or len(all_pairs_1) == 0:
-#        print("No valid pairs.")
-        #if no valid pairs then this category ain't it.
-        return [], [], []
-    elif debug:
-        print("All pairs: {};{}".format(all_pairs_0, all_pairs_1))
+def getBestPairs(lepTypes, entry, pair2s, debug=False) :
+    #debug = False
     #ok, now find the 2 best pairs, with the restriction that particles can't be too close to each other.
     #sort these pairs enough to get the very best one.
-    all_pair2s = bubble2(lepTypes, entry, all_pair2s)
+    all_pair2s = bubble2(lepTypes, entry, pair2s)
     if debug:
         print("all_pair2s: {}".format(all_pair2s))
 
@@ -730,12 +837,12 @@ def getBestPairs(lepTypes, entry, lists) :
                 exec("pts[kk] = entry.%s_pt[all_pair2s[0][ii][kk]]"%(lname))
             #if 2nd particle has more pt, then swap with first particle (just to keep it nice and orderly).
             if pts[1] > pts[0]:
-                all_pair2s[0][ii][0], all_pair2s[0][ii][1] = all_pair2s[0][ii][1], all_pairs[0][ii][0]
+                all_pair2s[0][ii][0], all_pair2s[0][ii][1] = all_pair2s[0][ii][1], all_pair2s[0][ii][0]
 
     #for the lead tau pair, we also need a Lorentz vector. 
     vecs = []
     for i in range(2):
-        vecs.append( get4vec(ll0[i], entry, all_pair2s[0][0][i]) )
+        vecs.append( get4vec(lepTypes[i], entry, all_pair2s[0][0][i]) )
     return vecs, all_pair2s[0][0], all_pair2s[0][1]
 
 def getBestTauPairPt(channel, entry, tauList) :
@@ -1665,14 +1772,10 @@ def getGoodLists(lepTypes, entry, printOn=False):
     #one list for each of the lepton types
     lists = [[] for i in range(4)]
     for i in range(4):
-        #don't repeat if it's the same lepton type as one of the others.
-        ctn = False #continue or nah
-        for j in range(i-1):
-            if lepTypes[i] == lepTypes[j]:
-                lists[i] = lists[j]
-                ctn = True #continue in the outer loop
-                break
-        if ctn: continue
+        #don't repeat if it's the same lepton type as its partner.
+        if (i == 1 or i == 3) and lepTypes[i] == lepTypes[i-1]:
+            lists[i] = lists[i-1]
+            continue
         #first get the current pair
         lt = lepTypes[:2]
         if i > 1:
