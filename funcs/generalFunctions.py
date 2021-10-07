@@ -903,8 +903,12 @@ class pileUpWeight() :
             #group = vals[1]
             #nickNames[group].append(nickName)
             if '*' in vals[2] :
-                value1, value2 = map(float, vals[2].split("*"))
-                xSec = float(value1*value2)
+                #value1, value2 = map(float, vals[2].split("*"))
+                #allow >2 values
+                values = map(float, vals[2].split("*"))
+                xsec = 1.0
+                for jjj in values: xsec *= jjj
+                #xSec = float(value1*value2)
             elif '+' in vals[2] :
                 value1, value2 = map(float, vals[2].split("+"))
                 xSec = float(value1+value2)

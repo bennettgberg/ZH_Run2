@@ -29,40 +29,46 @@ print "Using selections:\n", selections
 
 #returns the list of muon trigger paths for the given year.
 def muonTriggers_4tau(year):
-    if year == 2017:
+    if year in [2016, 2017, 2018]:
         triggers = [
+            "HLT_IsoMu22",
+            "HLT_IsoMu22_eta2p1",
+            "HLT_IsoTkMu22",
+            "HLT_IsoTkMu22_eta2p1",
             "HLT_IsoMu27",
             "HLT_IsoMu24",
             "HLT_IsoTkMu24",
+            "HLT_TripleMu_12_10_5",
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8",
             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8",
             "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ",
             "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_Mass8" ]
     else:
-        print("Error! Trigger code for year {} not yet written.")
+        print("Error! Muon triggers for year {} unknown.")
         triggers = []
         
     return triggers
 
 #returns list of electron trigger paths for the given year.
 def electronTriggers_4tau(year):
-    if year == 2017:
-        triggers = [ "HLT_Ele35_WPTight_Gsf",
-            "HLT_Ele32_WPTight_Gsf",
-            "HLT_Ele27_eta2p1_WPTight_Gsf",
+    if year in [2016, 2017, 2018]:
+        triggers = [
             "HLT_Ele25_eta2p1_WPTight_Gsf",
+            "HLT_Ele27_WPTight_Gsf",
+            "HLT_Ele32_WPTight_Gsf",
+            "HLT_Ele35_WPTight_Gsf",
             "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL",
-            "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ" ]
+            "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ"]
     else:
-        print("Error! Trigger code for year {} not yet written.")
+        print("Error! Electron triggers unknown for year {}.")
         triggers = []
         
     return triggers
 
 #returns list of tau trigger paths for the given year.
 def tauTriggers_4tau(year):
-    if year == 2017:
+    if year in [2016, 2017, 2018]:
         triggers = ["HLT_Tau3Mu_Mu7_Mu1_TkMu1_IsoTau15",
                     "HLT_Tau3Mu_Mu7_Mu1_TkMu1_IsoTau15_Charge1",
                     "HLT_Tau3Mu_Mu7_Mu1_TkMu1_Tau15",

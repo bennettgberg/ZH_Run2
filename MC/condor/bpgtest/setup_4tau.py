@@ -10,12 +10,12 @@ import sys
 def main():
     
     #submit jobs within this script (T) or just do the setup (F)
-    submit_now = True
+    submit_now = False #True
 
     #always delete current directory if it already exists?
     always_del = False
 
-    year = 2017
+    year = 2018
     
     #number of root files to run in a single job
     nroot = 1 # 1
@@ -37,7 +37,7 @@ def main():
         
         #True if the files will be stored in my personal eos space, false otherwise.
         my_eos = False
-        if "_M-" in samp_name:
+        if "HToAA" in samp_name and "_M-" in samp_name:
             my_eos = True
         
         isMC = True
@@ -83,9 +83,11 @@ def main():
                 #create the directory in eos for these files to be moved to
                 os.system("eos root://cmseos.fnal.gov mkdir /store/user/bgreenbe/haa_4tau_%d/signal_M-%s"%(year, mass))
             #add signal sample to nAODv7
-            os.system("python /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/addPUhisto.py -f /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/MC_%d_nAODv7.root -ch ZZZ -n HToAATo4Tau_M-%s"%(year, mass))
+            #os.system("python /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/addPUhisto.py -f /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/MC_%d_nAODv7.root -ch ZZZ -n HToAATo4Tau_M-%s"%(year, mass))
+            os.system("python /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/addPUhisto.py -f /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/MC_%d_nAODv7.root -n HToAATo4Tau_M-%s"%(year, mass)) #ZHToTauTau default.
         elif new_sample:
-            os.system("python /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/addPUhisto.py -f /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/MC_%d_nAODv7.root -ch ZZZ -n %s"%(year, samp_name)) 
+#            os.system("python /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/addPUhisto.py -f /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/MC_%d_nAODv7.root -ch ZZZ -n %s"%(year, samp_name)) 
+            pass
 
         #submit the jobs now (if we're supposed to)
         if submit_now:

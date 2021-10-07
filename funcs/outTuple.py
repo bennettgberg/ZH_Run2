@@ -1139,16 +1139,11 @@ class outTuple() :
             #self.gen_match_5[0] = -1
 
 
+            #separate out the LHE vs pileup info, because some files have one but not the other!
+            #pileup
             try :
                 self.weight[0]           = entry.genWeight
-                self.LHEweight[0]        = entry.LHEWeight_originalXWGTUP
                 self.Generator_weight[0] = entry.Generator_weight
-                self.LHE_Njets[0]        = ord(entry.LHE_Njets)
-                if SystIndex == 0 :
-#                    print("nLHEScaleWeight: {}".format(int(entry.nLHEScaleWeight)))
-                    for i in range(0, min(9, int(entry.nLHEScaleWeight))) :
-#                        print("i={}, scaleWeight={}".format(i, entry.LHEScaleWeight[i]))
-                        self.LHEScaleWeights[i] = entry.LHEScaleWeight[i]
 
                 self.nPU[0]  = entry.Pileup_nPU
                 self.nPUEOOT[0]  = entry.Pileup_sumEOOT
@@ -1157,19 +1152,32 @@ class outTuple() :
                 self.nPV[0]  = entry.PV_npvs
                 self.nPVGood[0]  = entry.PV_npvsGood
 
-            except AttributeError :
+            except AttributeError:
                 self.weight[0]           = 1.
                 self.weightPU[0]         = -1
                 self.weightPUtrue[0]     = -1
-                self.LHEweight[0]        = 1.
                 self.Generator_weight[0] = 1.
-                self.LHE_Njets[0] = -1
                 self.nPU[0]  = -1
                 self.nPUEOOT[0]  = -1
                 self.nPULOOT[0]  = -1
                 self.nPUtrue[0]  = -1
                 self.nPV[0]  = -1
                 self.nPVGood[0]  = -1
+
+
+            #LHE
+            try:
+                self.LHEweight[0]        = entry.LHEWeight_originalXWGTUP
+                self.LHE_Njets[0]        = ord(entry.LHE_Njets)
+                if SystIndex == 0 :
+#                    print("nLHEScaleWeight: {}".format(int(entry.nLHEScaleWeight)))
+                    for i in range(0, min(9, int(entry.nLHEScaleWeight))) :
+#                        print("i={}, scaleWeight={}".format(i, entry.LHEScaleWeight[i]))
+                        self.LHEScaleWeights[i] = entry.LHEScaleWeight[i]
+
+            except AttributeError :
+                self.LHEweight[0]        = 1.
+                self.LHE_Njets[0] = -1
         '''
         goodElectronList = tauFun2.makeGoodElectronList(entry)
         goodMuonList = tauFun2.makeGoodMuonList(entry)
