@@ -10,15 +10,18 @@ import sys
 def main():
     
     #submit jobs within this script (T) or just do the setup (F)
-    submit_now = False #True
+    submit_now = True # False #True
 
     #always delete current directory if it already exists?
     always_del = False
 
-    year = 2018
+    year = 2017
     
     #number of root files to run in a single job
     nroot = 1 # 1
+
+    #do systematics or nah (will take way longer)
+    doSyst = True
 
     #name for parent directory for all the new directories
     parent = "4tau_{}".format(year)
@@ -52,18 +55,20 @@ def main():
         #also make a directory on eos for it.
         eos_path = "/eos/uscms/store/user/bgreenbe/haa_4tau_%d/%s"%(year, samp_name)
         #MUST delete all prior contents in the eos directory if it already exists.
-        #(this part not yet tested!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
         if os.path.exists(eos_path):
             if not always_del:
                 cont = raw_input("Directory %s already exists. Delete all contents? (Y to delete and continue, N to cancel.) "%(eos_path))
                 if cont not in ["Y", "y", "Yes", "yes"]:
                     sys.exit()
+                    #temporarily allow to continue without deleting (MAKE SURE TO CHANGE THIS BACK!!)
+                    ##pass
                 else:
                     always_del = True
-            os.system("rm %s/*.root"%(eos_path))
+            if always_del:
+                os.system("rm %s/*.root"%(eos_path))
         os.system("eos root://cmseos.fnal.gov mkdir /store/user/bgreenbe/haa_4tau_%d/%s"%(year, samp_name))
         #run the setup code
-        os.system("cd %s ; python ../../../makeCondorsam.py --dataSet %s --nickName %s --csv bpgSamples.csv --mode anaXRD --year %d -c %d -s HAA -g 0 -p /uscms/homes/b/bgreenbe/x509up_u52949 -l tcsh -tttt 0 -myeos %d -d %s\n"%(new_name, sample, samp_name, year, nroot, 1 if my_eos else 0, "MC" if isMC else "Data"))
+        os.system("cd %s ; python ../../../makeCondorsam.py --dataSet %s --nickName %s --csv bpgSamples.csv --mode anaXRD --year %d -c %d -s HAA -g 0 -p /uscms/homes/b/bgreenbe/x509up_u52949 -l tcsh -tttt 0 -myeos %d -d %s %s\n"%(new_name, sample, samp_name, year, nroot, 1 if my_eos else 0, "MC" if isMC else "Data", "-j true" if doSyst else ""))
         #come back to get ready for the next one.
         os.system("cd /uscms/homes/b/bgreenbe/work/CMSSW_10_2_9/src/ZH_Run2/MC/condor/bpgtest")
         #cp the submit_jobs file to the directory.

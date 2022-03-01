@@ -20,6 +20,7 @@ def getArgs() :
     parser.add_argument("-l","--language",default="bash",type=str,help="Language for scripts to run (only bash or tcsh is supported for now.)")
     parser.add_argument("-tttt","--tau4",default=0,type=int,help="4tau version (1) or normal version (0)")
     parser.add_argument("-myeos","--my_eos",default=0,type=int,help="input files will exist in my personal eos space (1) or won't (0)")
+    parser.add_argument("-j","--doSystematics",default="false",type=str,help="doSystematics (true) or nah (false)")
     return parser.parse_args()
 
 def beginBatchScriptTcsh(baseFileName) :
@@ -163,7 +164,7 @@ for nFile in range(0, len(dataset),mjobs) :
             outLines.append("xrdcp root://cmseos.fnal.gov//store/user/bgreenbe/haa_4tau_{}/signal_{}/{} inFile.root\n".format(era, aMassString, fname))
         outFileName = "{0:s}_{1:03d}.root".format(args.nickName,nFile+j)
         #print("python HAA{}.py -f inFile.root -o {} --nickName {} --csv {} -y {} -s {} -w 1 -g {}\n".format(ttttstr, outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch))
-        outLines.append("python HAA{6:s}.py -f inFile.root -o {0:s} --nickName {1:s} --csv {2:s} -y {3:s} -s {4:s} -w 1 -g {5:d} -d {7:s}\n".format(outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch, ttttstr, "MC" if isMC else "Data"))
+        outLines.append("python HAA.py -f inFile.root -o {0:s} --nickName {1:s} --csv {2:s} -y {3:s} -s {4:s} -w 1 -g {5:d} -d {6:s} -j {7:s}\n".format(outFileName,args.nickName, args.csv, args.year, args.selection, args.genmatch, "MC" if isMC else "Data", args.doSystematics))
         #copy the file to eos.
 #        outLines.append("xrdcp {0:s} root://cmseos.fnal.gov//store/user/bgreenbe/haa_4tau/{1:s}/{0:s}\n".format(outFileName, args.nickName))
         outLines.append("rm inFile.root\n")

@@ -1,7 +1,7 @@
 # output ntuple for H->tautau analysis for CMSSW_10_2_X
 
 from ROOT import TLorentzVector, TH1
-from math import sqrt, sin, cos, pi
+from math import sqrt, sin, cos, pi, atan2
 #import tauFun_4tau
 import tauFun2
 import ROOT, array
@@ -1011,7 +1011,7 @@ class outTuple() :
             #TrigListLepD, hltListLepD  = GF.findDoubleLeptTrigger(lepList, entry, channel_ll, era)
             #TrigListLepD = list(dict.fromkeys(TrigListLepD))
 
-            #TrigListLepT, hltListLepT = GF.findTripleLeptTrigger(fullLepList, entry, channel_ll, era)
+            TrigListLepT, hltListLepT = GF.findTripleLeptTrigger(fullLepList, entry, channel_ll, era)
             #TrigListLepT = list(dict.fromkeys(TrigListLepT))
 
             #if len(TrigListLepD) > 0 : print TrigListLepD, hltListLepD, TrigListLep, hltListLep
@@ -1029,11 +1029,11 @@ class outTuple() :
 #            self.whichTriggerWord[0]=0
 #            self.whichTriggerWordSubL[0]=0
 #            print "hltListLepT ",hltListLepT
-#            if "TriLept" in hltListLepT:
+            if "TriLept" in hltListLepT:
 #                print "found triple muon event"
-#                self.isTripleTrig[0] = 1
-#            else:
-#                self.isTripleTrig[0] = 0
+                self.isTripleTrig[0] = 1
+            else:
+                self.isTripleTrig[0] = 0
 #
 #            #if len(TrigListLep) >0 : print 'TrigerList ===========>', TrigListLep, lepList, hltListLep, channel_ll, 'istrig_1', is_trig_1, 'istrig_2', is_trig_2, 'lenTrigList', len(TrigListLep),  'lenLept', len(lepList), 'lepList_0', lepList[0], 'TrigList_0', TrigListLep[0], hltListLep
 #
@@ -1960,8 +1960,10 @@ class outTuple() :
                     self.metNoTauES[0]         = entry.METFixEE2017_T1_pt
                     self.metphiNoTauES[0]         = entry.METFixEE2017_T1_phi
                 except AttributeError :
-                    self.metNoTauES[0]         = entry.METFixEE2017_pt_nom
-                    self.metphiNoTauES[0]         = entry.METFixEE2017_phi_nom
+                    #self.metNoTauES[0]         = entry.METFixEE2017_pt_nom
+                    #self.metNoTauES[0]         = entry.METFixEE2017_pt_nom
+                    self.metNoTauES[0]         = entry.METFixEE2017_pt
+                    self.metphiNoTauES[0]         = entry.METFixEE2017_phi
                 if isMC :
                     try :
                         self.MET_T1Smear_pt[0]         = entry.METFixEE2017_T1Smear_pt
@@ -2001,10 +2003,22 @@ class outTuple() :
 
             if doUncertainties :
                 if isMC :
-                    self.MET_pt_UnclUp[0] = entry.METFixEE2017_pt_unclustEnUp
-                    self.MET_phi_UnclUp[0] = entry.METFixEE2017_phi_unclustEnUp
-                    self.MET_pt_UnclDown[0] = entry.METFixEE2017_pt_unclustEnDown
-                    self.MET_phi_UnclDown[0] = entry.METFixEE2017_phi_unclustEnDown
+                    #self.MET_pt_UnclUp[0] = entry.METFixEE2017_pt_unclustEnUp
+                    #self.MET_phi_UnclUp[0] = entry.METFixEE2017_phi_unclustEnUp
+                    #self.MET_pt_UnclDown[0] = entry.METFixEE2017_pt_unclustEnDown
+                    #self.MET_phi_UnclDown[0] = entry.METFixEE2017_phi_unclustEnDown
+                    metpx = entry.METFixEE2017_sumPtUnclustered * cos(entry.METFixEE2017_phi)
+                    metpy = entry.METFixEE2017_sumPtUnclustered * sin(entry.METFixEE2017_phi)
+                    #first vary up
+                    new_met_x = metpx + entry.METFixEE2017_MetUnclustEnUpDeltaX
+                    new_met_y = metpy + entry.METFixEE2017_MetUnclustEnUpDeltaY
+                    self.MET_pt_UnclUp[0] =    sqrt(new_met_x**2 + new_met_y**2)
+                    self.MET_phi_UnclUp[0] =   atan2(new_met_x, new_met_y)
+                    #now vary down
+                    new_met_x = metpx - entry.METFixEE2017_MetUnclustEnUpDeltaX
+                    new_met_y = metpy - entry.METFixEE2017_MetUnclustEnUpDeltaY
+                    self.MET_pt_UnclDown[0] =  sqrt(new_met_x**2 + new_met_y**2)
+                    self.MET_phi_UnclDown[0] = atan2(new_met_x, new_met_y)
 
         # trig
         if SystIndex ==0 :
@@ -4030,10 +4044,15 @@ class outTuple() :
 
             if doUncertainties :
                 if isMC :
-                    self.MET_pt_UnclUp[0] = entry.METFixEE2017_pt_unclustEnUp
-                    self.MET_phi_UnclUp[0] = entry.METFixEE2017_phi_unclustEnUp
-                    self.MET_pt_UnclDown[0] = entry.METFixEE2017_pt_unclustEnDown
-                    self.MET_phi_UnclDown[0] = entry.METFixEE2017_phi_unclustEnDown
+                    #self.MET_pt_UnclUp[0] = entry.METFixEE2017_pt_unclustEnUp
+                    #self.MET_phi_UnclUp[0] = entry.METFixEE2017_phi_unclustEnUp
+                    #self.MET_pt_UnclDown[0] = entry.METFixEE2017_pt_unclustEnDown
+                    #self.MET_phi_UnclDown[0] = entry.METFixEE2017_phi_unclustEnDown
+                            #?????
+                    self.MET_pt_UnclUp[0] =    entry.METFixEE2017_sumPtUnclustered
+                    self.MET_phi_UnclUp[0] =   entry.METFixEE2017_sumPtUnclustered
+                    self.MET_pt_UnclDown[0] =  entry.METFixEE2017_sumPtUnclustered
+                    self.MET_phi_UnclDown[0] = entry.METFixEE2017_sumPtUnclustered
 
         # trig
         if SystIndex ==0 :

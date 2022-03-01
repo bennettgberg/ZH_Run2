@@ -95,7 +95,7 @@ def checkMETFlags(entry, year, isMC=False) :
     return METfilter
 
 
-def printEvent(entry) :
+def printEvent(entry, isMC=True) :
 
     print("** Run={0:d} LS={1:d} Event={2:d} MET={3:.1f}".format(entry.run,entry.luminosityBlock,entry.event,entry.MET_pt))
     if entry.nMuon > 0 :
@@ -106,7 +106,7 @@ def printEvent(entry) :
             print("{0:2d} {1:2s}{2:5.1f}{3:6.2f}{4:6.2f}{5:7.3f} {6:5s} {7:5s} {8:5s}{9:7.3f}{10:7.3f}{11:s}".format(
                 j,muSign,entry.Muon_pt[j],entry.Muon_eta[j],entry.Muon_phi[j],entry.Muon_pfRelIso04_all[j],str(entry.Muon_mediumId[j]),str(entry.Muon_tightId[j]),
                 str(entry.Muon_softId[j]),entry.Muon_dxy[j],entry.Muon_dz[j],
-                getMCmatchString(entry.Muon_eta[j],entry.Muon_phi[j],entry))), ord(entry.Muon_genPartFlav[j])
+                getMCmatchString(entry.Muon_eta[j],entry.Muon_phi[j],entry) if isMC else " -- ")), ord(entry.Muon_genPartFlav[j]) if isMC else " -- "
 
     if entry.nElectron > 0 :
         print("Electrons                           Lost  \n # Q    Pt   Eta   Phi   Iso   Qual Hits  MVA  WP90    dxy     dz   MC     dR     Pt   eta   phi genMatch")
@@ -118,7 +118,7 @@ def printEvent(entry) :
               entry.Electron_pt[j],entry.Electron_eta[j],entry.Electron_phi[j],entry.Electron_miniPFRelIso_all[j],
               entry.Electron_cutBased[j],ord(entry.Electron_lostHits[j]),entry.Electron_mvaFall17V2noIso[j],entry.Electron_mvaFall17V2noIso_WP90[j],
               entry.Electron_dxy[j],entry.Electron_dz[j],
-              getMCmatchString(entry.Electron_eta[j],entry.Electron_phi[j],entry))), ord(entry.Electron_genPartFlav[j])
+              getMCmatchString(entry.Electron_eta[j],entry.Electron_phi[j],entry) if isMC else " -- ")), ord(entry.Electron_genPartFlav[j]) if isMC else " -- "
 
 
     #print("Lepton List\n    Pt    Eta    Phi ")
@@ -155,9 +155,9 @@ def printEvent(entry) :
                 entry.Tau_rawIso[j],entry.Tau_chargedIso[j],entry.Tau_neutralIso[j],
                 entry.Tau_jetIdx[j],ord(entry.Tau_idAntiEle[j]),ord(entry.Tau_idAntiMu[j]),
                 entry.Tau_dxy[j],entry.Tau_dz[j],ord(entry.Tau_idMVAoldDM2017v2[j]),entry.Tau_rawMVAoldDM2017v2[j],
-                getMCmatchString(entry.Tau_eta[j],entry.Tau_phi[j],entry)[0:6],
+                getMCmatchString(entry.Tau_eta[j],entry.Tau_phi[j],entry)[0:6] if isMC else " -- ",
                 ord(entry.Tau_idDeepTau2017v2p1VSjet[j]),ord(entry.Tau_idDeepTau2017v2p1VSmu[j]),ord(entry.Tau_idDeepTau2017v2p1VSe[j]),
-                tauSign, ord(entry.Tau_genPartFlav[j]) ))
+                tauSign, ord(entry.Tau_genPartFlav[j]) if isMC else " -- " ))
 
                 #ord(entry.Tau_idDeepTau2017v2p1VSjet[j]),ord(entry.Tau_idDeepTau2017v2p1VSmu[j]),ord(entry.Tau_idDeepTau2017v2p1VSe[j]))), ord(entry.Tau_genPartFlav[j])
 
@@ -269,46 +269,46 @@ def findTripleLeptTrigger(goodLeptonList,entry,flavour,era):
     isLfired = False
     issubLfired = False
     issubsubLfired = False
-    print "length of muon list ",nLepton
+    #print "length of muon list ",nLepton
     if  'mm' in flavour and nLepton > 2 :
-        print "more than 2 muons!"
+        #print "more than 2 muons!"
         try: HLT_TripleMu_12_10_5 = entry.HLT_TripleMu_12_10_5
         except AttributeError : HLT_TripleMu_12_10_5 = False
 
-        if (entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[0]] and
-           entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[1]]):
+        if (entry.Muon_pt[goodLeptonList[2]] >= entry.Muon_pt[goodLeptonList[0]] and
+           entry.Muon_pt[goodLeptonList[0]] >= entry.Muon_pt[goodLeptonList[1]]):
             leadL = goodLeptonList[2]
             subleadL = goodLeptonList[0]
             subsubleadL = goodLeptonList[1]
-        elif (entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[1]] and
-           entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[0]]):
+        elif (entry.Muon_pt[goodLeptonList[2]] >= entry.Muon_pt[goodLeptonList[1]] and
+           entry.Muon_pt[goodLeptonList[1]] >= entry.Muon_pt[goodLeptonList[0]]):
             leadL = goodLeptonList[2]
             subleadL = goodLeptonList[1]
             subsubleadL = goodLeptonList[0]
-        elif (entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[2]] and
-           entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[0]]) :
+        elif (entry.Muon_pt[goodLeptonList[1]] >= entry.Muon_pt[goodLeptonList[2]] and
+           entry.Muon_pt[goodLeptonList[2]] >= entry.Muon_pt[goodLeptonList[0]]) :
             leadL = goodLeptonList[1]
             subleadL = goodLeptonList[2]
             subsubleadL = goodLeptonList[0]
-        elif (entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[0]] and
-           entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[2]]):
+        elif (entry.Muon_pt[goodLeptonList[1]] >= entry.Muon_pt[goodLeptonList[0]] and
+           entry.Muon_pt[goodLeptonList[0]] >= entry.Muon_pt[goodLeptonList[2]]):
             leadL = goodLeptonList[1]
             subleadL = goodLeptonList[0]
             subsubleadL = goodLeptonList[2]
-        elif (entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[1]] and
-           entry.Muon_pt[goodLeptonList[1]] > entry.Muon_pt[goodLeptonList[2]]) :
+        elif (entry.Muon_pt[goodLeptonList[0]] >= entry.Muon_pt[goodLeptonList[1]] and
+           entry.Muon_pt[goodLeptonList[1]] >= entry.Muon_pt[goodLeptonList[2]]) :
             leadL = goodLeptonList[0]
             subleadL = goodLeptonList[1]
             subsubleadL = goodLeptonList[2]
-        elif (entry.Muon_pt[goodLeptonList[0]] > entry.Muon_pt[goodLeptonList[2]] and
-           entry.Muon_pt[goodLeptonList[2]] > entry.Muon_pt[goodLeptonList[1]]) :
+        elif (entry.Muon_pt[goodLeptonList[0]] >= entry.Muon_pt[goodLeptonList[2]] and
+           entry.Muon_pt[goodLeptonList[2]] >= entry.Muon_pt[goodLeptonList[1]]) :
             leadL = goodLeptonList[0]
             subleadL = goodLeptonList[2]
             subsubleadL = goodLeptonList[1]
-        print "the three muons in order ",leadL,subleadL,subsubleadL
+        #print "the three muons in order ",leadL,subleadL,subsubleadL
 
         if entry.Muon_pt[leadL] < 5 or entry.Muon_pt[subleadL] < 5 or entry.Muon_pt[subsubleadL] < 5:
-            print "pt too low"
+            #print "pt too low"
             return LepttrigList, hltList
         #for electron triggers 1 = CaloIdL_TrackIdL_IsoVL, 2 = 1e (WPTight), 4 = 1e (WPLoose), 8 = OverlapFilter PFTau, 16 = 2e, 32 = 1e-1mu, 64 = 1e-1tau, 128 = 3e, 256 = 2e-1mu, 512 = 1e-2mu, 1024 = 1e (32_L1DoubleEG_AND_L1SingleEGOr), 2048 = 1e (CaloIdVT_GsfTrkIdT), 4096 = 1e (PFJet), 8192 = 1e (Photon175_OR_Photon200) for Electron (PixelMatched e/gamma)
 

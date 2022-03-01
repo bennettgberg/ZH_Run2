@@ -52,8 +52,10 @@ cutCounter = {}
 cutCounterGenWeight = {}
 
 #13 cats (no ee pairs--dwarfed by ZZ->4l bkg, and no tttt--too few events, would cost too much extra time and effort.)
-cats = ['ttmt', 'ttet', 'ttem', 'mtmt', 'mtet', 'mtem', 'etet', 'etem', 'emem', 'mmmt', 'mmet', 'mmem', 'mmtt']
+#cats = ['ttmt', 'ttet', 'ttem', 'mtmt', 'mtet', 'mtem', 'etet', 'etem', 'emem', 'mmmt', 'mmet', 'mmem', 'mmtt']
 #cats = ['mmmt', 'mmet', 'mmem', 'mmtt'] #, 'eemt', 'eeet', 'eeem', 'eett', 'tttt']
+#actually let's just do the mm** categories.
+cats = ['mmtt', 'mmmt', 'mmet', 'mmem']
 
 doJME  = args.doSystematics.lower() == 'true' or args.doSystematics.lower() == 'yes' or args.doSystematics == '1'
 
@@ -167,8 +169,8 @@ if args.unique != 'none' :
     for line in open(args.unique,'r').readlines() : uniqueEvents.add(int(line.strip()))
     print("******* Analyzing only {0:d} events from {1:s} ******.".format(len(uniqueEvents),args.unique))
     
-#change to True later!!!!
-doSyst = False #doJME
+#needs to be True to do systematics!!
+doSyst = doJME
 isMC = MC
 
 sysall = [ 'scale_e', 'scale_m_etalt1p2', 'scale_m_eta1p2to2p1', 'scale_m_etagt2p1',
