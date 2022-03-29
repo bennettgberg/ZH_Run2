@@ -176,7 +176,9 @@ isMC = MC
 sysall = [ 'scale_e', 'scale_m_etalt1p2', 'scale_m_eta1p2to2p1', 'scale_m_etagt2p1',
 'scale_t_1prong', 'scale_t_1prong1pizero', 'scale_t_3prong', 'scale_t_3prong1pizero']
 sysT = ["Central"]
-if MC and doSyst:
+#I guess I even need systematics for data!
+#if MC and doSyst:
+if doSyst:
     for i,sys in enumerate(sysall):
         sysT.append(sys + 'Up')
         sysT.append(sys + 'Down')
@@ -283,7 +285,8 @@ for count, e in enumerate(inTree) :
     metPtPhi.append(float(met_pt))
     metPtPhi.append(float(met_phi))
 
-    if MC :
+    #also need for data w/ systematics?
+    if doJME or MC :
         if len(muMass) == 0 :
             for j in range(e.nMuon):
                 muMass.append(e.Muon_mass[j])
